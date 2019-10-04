@@ -3,7 +3,7 @@
 
 ## Requirements
 
-All requirements for HTOparser are available from CRAN, and should be installed automatically by install.packages:
+All requirements for HTOparser are available from CRAN, and should be installed automatically by `install_github()`:
 ```
 Imports:
     assertthat (>= 0.2.1),
@@ -23,3 +23,11 @@ Sys.setenv(GITHUB_PAT = "your-access-token-here")
 devtools::install_github("aifimmunology/HTOparser")
 ```
 
+## Tests
+
+Tests for `HTOparser` are implemented using the `testthat` testing suite:  
+https://testthat.r-lib.org/
+
+To run tests for this package, download from Github and run `devtools::test()` in R.
+
+Extra-stringet, CRAN-level package testing can be performed using `devtools::check()` in R.
