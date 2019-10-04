@@ -2,5 +2,7 @@
 
 export(barcode_table_to_matrix)
 export(binarize_hash)
+export(binarize_hash_matrix)
+export(categorize_binary_hash_matrix)
 export(fuzzy_filtering)
 export(select_hash_cutoff)
