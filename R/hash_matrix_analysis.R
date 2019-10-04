@@ -154,10 +154,10 @@ categorize_binary_hash_matrix <- function(bmat) {
   hash_category_table <- cbind(data.frame(cell_barcode = colnames(bmat)),
                                hash_category_table)
 
-  hash_count_table <- table(hash_category_table$hash_category)
-  hash_summary <- data.frame(hash_category = names(hash_count_table),
-                             n_category = hash_count_table,
-                             frac_category = hash_count_table / sum(hash_count_table))
+  category_count_table <- table(hash_category_table$hash_category)
+  hash_summary <- data.frame(hash_category = names(category_count_table),
+                             n_category = category_count_table,
+                             frac_category = category_count_table / sum(category_count_table))
 
   missing_summary <- data.frame(hash_category = "missing",
                                 n_category = sum(is.na(hash_category_table$hash_category)),
