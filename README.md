@@ -7,10 +7,10 @@ All requirements for HTOparser are available from CRAN, and should be installed 
 ```
 Imports:
     assertthat (>= 0.2.1),
-    Matrix (>= 1.2-17),
     purrr (>= 0.3.2)
 Requires:
-    data.table (>= 1.12.2)
+    data.table (>= 1.12.2),
+    Matrix (>= 1.2-17)
 ```
 
 ## Installation
