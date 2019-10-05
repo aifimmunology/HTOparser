@@ -60,7 +60,7 @@ binarize_hash <- function(x,
   return(res)
 }
 
-#' Binarize a vector of hash counts
+#' Binarize a matrix of hash counts
 #'
 #' If cutoff values are provided, they will be used. If not, cutoffs will be determined
 #' using select_hash_cutoff()

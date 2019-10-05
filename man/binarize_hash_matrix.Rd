@@ -2,7 +2,7 @@
 % Please edit documentation in R/hash_matrix_analysis.R
 \name{binarize_hash_matrix}
 \alias{binarize_hash_matrix}
-\title{Binarize a vector of hash counts}
+\title{Binarize a matrix of hash counts}
 \usage{
 binarize_hash_matrix(mat, cutoff_vals = NULL)
 }
