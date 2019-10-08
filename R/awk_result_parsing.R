@@ -19,11 +19,10 @@ fuzzy_filtering <- function(dt,
                             match_values,
                             max_distance = 1) {
 
-  assertthat::assert_that(class(dt) == "data.table")
-  assertthat::assert_that(c("count","cell_barcode","hto_barcode") %in% colnames(dt))
+  assertthat::assert_that("data.table" %in% class(dt))
+  assertthat::assert_that(all(c("count","cell_barcode","hto_barcode") %in% colnames(dt)))
   assertthat::assert_that(class(match_column) == "character")
   assertthat::assert_that(length(match_column) == 1)
-  assertthat::assert_that(class(match_values) == 1)
   assertthat::assert_that(class(max_distance) == "numeric")
   assertthat::assert_that(length(max_distance) == 1)
 
@@ -53,7 +52,7 @@ fuzzy_filtering <- function(dt,
            by = list(cell_barcode,
                      hto_barcode)]
   # fix column order and names
-  dt <- dt[,c(3,1,2)]
+  dt <- dt[, c(3,1,2)]
   names(dt)[1] <- "count"
 
   return(dt)
@@ -72,7 +71,7 @@ fuzzy_filtering <- function(dt,
 barcode_table_to_matrix <- function(dt,
                                     valid_htos) {
 
-  assertthat::assert_that(class(dt) == "data.table")
+  assertthat::assert_that("data.table" %in% class(dt))
   assertthat::assert_that(c("count","cell_barcode","hto_barcode") %in% colnames(dt))
   assertthat::assert_that(class(valid_htos) == "character")
 

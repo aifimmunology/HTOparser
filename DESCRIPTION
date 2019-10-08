@@ -11,7 +11,7 @@ LazyData: true
 Imports:
     assertthat (>= 0.2.1),
     purrr (>= 0.3.2)
-Requires:
+Depends:
     data.table (>= 1.12.2),
     Matrix (>= 1.2-17)
 Suggests: 
