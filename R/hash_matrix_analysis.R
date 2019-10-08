@@ -31,9 +31,9 @@ select_hash_cutoff <- function(x,
   }
 
   if(sum(res) == 0) {
-    return(max(x))
+    max(x)
   } else {
-    return(max(x[res == 0]))
+    max(x[res == 0])
   }
 
 }
@@ -57,7 +57,7 @@ binarize_hash <- function(x,
 
   res[x > cutoff] <- 1
 
-  return(res)
+  res
 }
 
 #' Binarize a matrix of hash counts
@@ -105,8 +105,8 @@ binarize_hash_matrix <- function(mat,
                          frac_pos = Matrix::rowSums(bmat) / ncol(bmat),
                          frac_neg = (ncol(bmat) - Matrix::rowSums(bmat)) / ncol(bmat))
 
-  return(list(bmat = bmat,
-              bsummary = bsummary))
+  list(bmat = bmat,
+       bsummary = bsummary)
 
 }
 
@@ -165,6 +165,6 @@ categorize_binary_hash_matrix <- function(bmat) {
 
   hash_summary <- rbind(hash_summary, missing_summary)
 
-  return(list(hash_category_table = hash_category_table,
-              hash_summary = hash_summary))
+  list(hash_category_table = hash_category_table,
+       hash_summary = hash_summary)
 }

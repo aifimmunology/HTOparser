@@ -55,7 +55,7 @@ fuzzy_filtering <- function(dt,
   dt <- dt[, c(3,1,2)]
   names(dt)[1] <- "count"
 
-  return(dt)
+  dt
 }
 
 #' Convert an HTO barcode table to a sparse matrix of hto_barcode x cell_barcode
@@ -92,5 +92,5 @@ barcode_table_to_matrix <- function(dt,
   # Make sure the output row order matches the input valid_htos
   mat <- mat[valid_htos, ]
 
-  return(mat)
+  mat
 }
