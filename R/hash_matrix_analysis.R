@@ -23,7 +23,7 @@ select_hash_cutoff <- function(x,
 
   if(length(x_gt_cut) > 2) {
     set.seed(seed)
-    km <- kmeans(log10(x_gt_cut), centers = 2)
+    km <- stats::kmeans(log10(x_gt_cut), centers = 2)
     cl <- km$cluster
     high_cl <- which(km$centers == max(km$centers))
 

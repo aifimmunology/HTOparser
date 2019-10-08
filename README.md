@@ -7,7 +7,9 @@ All requirements for HTOparser are available from CRAN, and should be installed 
 ```
 Imports:
     assertthat (>= 0.2.1),
-    purrr (>= 0.3.2)
+    dplyr (>= 0.8.0.1),
+    purrr (>= 0.3.2),
+    R.utils (>= 2.8.0)
 Depends:
     data.table (>= 1.12.2),
     Matrix (>= 1.2-17)
