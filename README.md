@@ -24,15 +24,58 @@ You may first need to register your GitHub PAT, as this is a private repository.
 Sys.setenv(GITHUB_PAT = "your-access-token-here")
 devtools::install_github("aifimmunology/HTOparser")
 ```
+## Test Data
+
+This package includes test datasets that can be used for writing tests, vignettes, or demos.
+
+### CITE-seq-Count
+
+Data generated using CITE-seq-Count can be loaded using:
+```
+library(HTOparser)
+
+test_hto_table <- fread(system.file("testdata/CITE-seq_count_matrix.csv.gz",
+                                    package = "HTOparser"))
+test_hto_mat <- as(as.matrix(test_hto_table[1:11,-1]), "dgCMatrix")
+```
+Row names of this matrix can be converted to barcodes using:
+```
+test_hto_key <- fread(system.file("testdata/CITE-seq_count_tags.csv",
+                                  package = "HTOparser"),
+                      header = FALSE)
+
+rownames(test_hto_mat) <- test_hto_key$V1[match(test_hto_table[[1]][1:11], test_hto_key$V2)]
+```
+
+### `awk`-based results
+
+A table of results from `awk`-based parsing of HTO FASTQ files can be loaded using:
+```
+library(data.table)
+
+test_hto_table <- fread(system.file("testdata/awk_pipeline_counts_table.csv.gz",
+                                    package = "HTOparser"))
+colnames(test_hto_table) <- c("count","cell_barcode","hto_barcode")
+```
+
+### BioLegend TotalSeq References
+
+CSV files with reference information for the TotalSeqA Hash Tag Oligo sequences are stored in `/inst/data/`. They can be loaded into R as a data.frame using:
+```
+human_totalseq_ref <- read.csv(system.file("data/TotalSeqA_human_barcodes.csv"))
+mouse_totalseq_ref <- read.csv(system.file("data/TotalSeqA_mouse_barcodes.csv"))
+biotin_totalseq_ref <- read.csv(system.file("data/TotalSeqA_biotin_barcodes.csv"))
+
+```
 
 ## Tests
 
 Tests for `HTOparser` are implemented using the `testthat` testing suite:  
 https://testthat.r-lib.org/
 
-To run tests for this package, download from Github and run `devtools::test()` in R.
+To run tests for this package, download the repository from Github and run `devtools::test()` in R from the base directory of the package.
 
-Extra-stringet, CRAN-level package testing can be performed using `devtools::check()` in R.
+Extra-stringent, CRAN-level package testing can be performed using `devtools::check()` in R.
 
 ## Style and Standards
 
