@@ -5,18 +5,22 @@ library(data.table)
 # load test data
 test_hto_table <- fread(system.file("testdata/CITE-seq_count_matrix.csv.gz",
                                     package = "HTOparser"))
-test_hto_mat <- as(as.matrix(test_hto_table[,-1]), "dgCMatrix")
+test_hto_mat <- as(as.matrix(test_hto_table[1:11,-1]), "dgCMatrix")
 
 test_hto_key <- fread(system.file("testdata/CITE-seq_count_tags.csv",
                                   package = "HTOparser"),
                       header = FALSE)
 
-rownames(test_hto_mat) <- test_hto_key$V1[match(test_hto_table[[1]], test_hto_key$V2)]
+rownames(test_hto_mat) <- test_hto_key$V1[match(test_hto_table[[1]][1:11], test_hto_key$V2)]
 
 test_that(
   "select_hash_cutoff selects a cutoff to split HTO values",
   {
+    cutoff <- select_hash_cutoff(test_hto_mat[10,],
+                                 min_cut = 10)
 
+    expect_true(class(cutoff) == "numeric")
+    expect_length(cutoff, 1)
   }
 )
 
@@ -24,7 +28,13 @@ test_that(
 test_that(
   "binarize_hash converts a vector of values to binary values based on a cutoff",
   {
+    binarized_result <- binarize_hash(test_hto_mat[10,],
+                                      cutoff = 172)
 
+    expect_true(all(unique(binarized_result) %in% c(0,1)))
+    expect_length(binarized_result, ncol(test_hto_mat))
+    expect_true(class(binarized_result) == "numeric")
+    expect_equal(sum(binarized_result), sum(test_hto_mat[10,] > 172))
   }
 )
 
@@ -32,15 +42,24 @@ test_that(
 test_that(
   "binarize_hash_matrix converts a matrix of values to a binary matrix with automatic cutoffs",
   {
+    binarized_results <- binarize_hash_matrix(test_hto_mat)
 
-  }
-)
+    expect_true(class(binarized_results) == "list")
+    expect_length(binarized_results, 2)
+    expect_equal(names(binarized_results), c("bmat", "bsummary"))
 
+    expect_true(class(binarized_results$bmat) == "dgCMatrix")
+    expect_equal(dim(binarized_results$bmat), dim(test_hto_mat))
+    expect_identical(rownames(binarized_results$bmat), rownames(test_hto_mat))
+    expect_identical(colnames(binarized_results$bmat), colnames(test_hto_mat))
+    expect_true(all(unique(binarized_results$bmat@x) %in% c(0,1)))
 
-test_that(
-  "binarize_hash_matrix converts a matrix of values to a binary matrix with manual cutoffs",
-  {
-
+    expect_true(class(binarized_results$bsummary) == "data.frame")
+    expect_equal(nrow(binarized_results$bsummary), nrow(test_hto_mat))
+    expect_identical(binarized_results$bsummary$hto_barcode, rownames(test_hto_mat))
+    expect_identical(names(binarized_results$bsummary),
+                     c("hto_barcode","cutoff","n_pos","n_neg","frac_pos","frac_neg"))
+    expect_true(sum(binarized_results$bsummary$frac_pos > 0.4) == 3)
   }
 )
 
@@ -48,7 +67,9 @@ test_that(
 test_that(
   "categorize_binary_hash_matrix converts a binary matrix to categorical results",
   {
+    binarized_matrix <- binarize_hash_matrix(test_hto_mat)$bmat
 
+    hash_categories <- categorize_binary_hash_matrix(binarized_matrix)
   }
 )
 

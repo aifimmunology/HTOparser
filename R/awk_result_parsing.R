@@ -33,7 +33,10 @@ fuzzy_filtering <- function(dt,
                      function(y) {
                        agrep_res <- agrep(y,
                                           dt[[match_column]],
-                                          max.distance = list(substitution = max_distance))
+                                          max.distance = list(substitution = max_distance,
+                                                              insertions = 0,
+                                                              deletions = 0),
+                                          costs = list(substitutions = 1))
                        # data.frame will throw an error if
                        # length(agrep_res) == 0
                        if(length(agrep_res) > 0) {

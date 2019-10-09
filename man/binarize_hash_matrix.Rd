@@ -9,7 +9,7 @@ binarize_hash_matrix(mat, cutoff_vals = NULL)
 \arguments{
 \item{mat}{A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells}
 
-\item{cutoff_vals}{(optional) a named vector of cutoff values to apply. Lenght must be equal to nrow(mat), and names must exist in rownames(mat).}
+\item{cutoff_vals}{(optional) a named vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).}
 }
 \value{
 A list containing two objects:

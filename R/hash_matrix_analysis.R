@@ -66,7 +66,7 @@ binarize_hash <- function(x,
 #' using select_hash_cutoff()
 #'
 #' @param mat A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells
-#' @param cutoff_vals (optional) a named vector of cutoff values to apply. Lenght must be equal to nrow(mat), and names must exist in rownames(mat).
+#' @param cutoff_vals (optional) a named vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
 #'
 #' @return A list containing two objects:
 #' \itemize{
@@ -80,8 +80,8 @@ binarize_hash_matrix <- function(mat,
 
   assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
 
-  if(class(mat) == "matrix") {
-    mat <- as(mat, "dgCMatrix")
+  if(class(mat) == "dgCMatrix") {
+    mat <- as(mat, "matrix")
   }
 
   if(!is.null(cutoff_vals)) {
@@ -96,16 +96,20 @@ binarize_hash_matrix <- function(mat,
                          select_hash_cutoff)
   }
 
-  bmat <- as.numeric(mat > cutoff_vals)
+  bmat <- matrix(as.numeric(mat > cutoff_vals),
+                 ncol = ncol(mat),
+                 nrow = nrow(mat))
+  rownames(bmat) <- rownames(mat)
+  colnames(bmat) <- colnames(mat)
 
-  bsummary <- data.frame(hash_barcode = rownames(bmat),
+  bsummary <- data.frame(hto_barcode = rownames(bmat),
                          cutoff = cutoff_vals,
-                         n_pos = Matrix::rowSums(bmat),
-                         n_neg = ncol(bmat) - Matrix::rowSums(bmat),
-                         frac_pos = Matrix::rowSums(bmat) / ncol(bmat),
-                         frac_neg = (ncol(bmat) - Matrix::rowSums(bmat)) / ncol(bmat))
+                         n_pos = rowSums(bmat),
+                         n_neg = ncol(bmat) - rowSums(bmat),
+                         frac_pos = rowSums(bmat) / ncol(bmat),
+                         frac_neg = (ncol(bmat) - rowSums(bmat)) / ncol(bmat))
 
-  list(bmat = bmat,
+  list(bmat = as(bmat, "dgCMatrix"),
        bsummary = bsummary)
 
 }
@@ -125,6 +129,10 @@ binarize_hash_matrix <- function(mat,
 categorize_binary_hash_matrix <- function(bmat) {
 
   assertthat::assert_that(class(bmat) %in% c("matrix","dgCMatrix"))
+
+  if(class(bmat) == "dgCMatrix") {
+    bmat <- as(bmat, "matrix")
+  }
 
   results <- apply(bmat, 2,
                    function(binary_hash_scores) {
@@ -156,8 +164,8 @@ categorize_binary_hash_matrix <- function(bmat) {
 
   category_count_table <- table(hash_category_table$hash_category)
   hash_summary <- data.frame(hash_category = names(category_count_table),
-                             n_category = category_count_table,
-                             frac_category = category_count_table / sum(category_count_table))
+                             n_category = as.numeric(category_count_table),
+                             frac_category = as.numeric(category_count_table) / sum(category_count_table))
 
   missing_summary <- data.frame(hash_category = "missing",
                                 n_category = sum(is.na(hash_category_table$hash_category)),
