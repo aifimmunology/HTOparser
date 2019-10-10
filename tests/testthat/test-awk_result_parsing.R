@@ -8,11 +8,10 @@ test_hto_table <- fread(system.file("testdata/awk_pipeline_counts_table.csv.gz",
                                     package = "HTOparser"))
 colnames(test_hto_table) <- c("count","cell_barcode","hto_barcode")
 
-# load TrueSeq HTO values
-trueseq_table <- fread(system.file("data/TotalSeqA_human_barcodes.csv",
-                                   package = "HTOparser"))
+# load totalseq HTO values
+totalseq_table <- totalseq_a_human()
 
-valid_barcodes <- trueseq_table$hto_barcode
+valid_barcodes <- totalseq_table$hto_barcode
 
 test_that(
   "fuzzy_filtering performs filtering for a single barcode.",

@@ -38,6 +38,23 @@ test_that(
   }
 )
 
+test_that(
+  "add_missing_hto_rows adds additional empty rows to a matrix for missing hto barcodes",
+  {
+    valid_htos <- totalseq_a_human()$hto_barcode
+
+    missing_htos <- setdiff(valid_htos, rownames(test_hto_mat))
+
+    mat_result <- add_missing_hto_rows(mat = test_hto_mat,
+                                       valid_htos = valid_htos)
+
+    expect_true(class(mat_result) == "dgCMatrix")
+    expect_equal(nrow(mat_result), length(valid_htos))
+    expect_equal(ncol(mat_result), ncol(test_hto_mat))
+    expect_identical(rownames(mat_result), valid_htos)
+    expect_equal(sum(mat_result[missing_htos,]), 0)
+  }
+)
 
 test_that(
   "binarize_hash_matrix converts a matrix of values to a binary matrix with automatic cutoffs",
@@ -49,7 +66,8 @@ test_that(
     expect_equal(names(binarized_results), c("bmat", "bsummary"))
 
     expect_true(class(binarized_results$bmat) == "dgCMatrix")
-    expect_equal(dim(binarized_results$bmat), dim(test_hto_mat))
+    expect_equal(ncol(binarized_results$bmat), ncol(test_hto_mat))
+    expect_equal(nrow(binarized_results$bmat), nrow(test_hto_mat))
     expect_identical(rownames(binarized_results$bmat), rownames(test_hto_mat))
     expect_identical(colnames(binarized_results$bmat), colnames(test_hto_mat))
     expect_true(all(unique(binarized_results$bmat@x) %in% c(0,1)))
@@ -58,7 +76,35 @@ test_that(
     expect_equal(nrow(binarized_results$bsummary), nrow(test_hto_mat))
     expect_identical(binarized_results$bsummary$hto_barcode, rownames(test_hto_mat))
     expect_identical(names(binarized_results$bsummary),
-                     c("hto_barcode","cutoff","n_pos","n_neg","frac_pos","frac_neg"))
+                     c("hto_barcode","cutoff","n_pos","n_neg","n_below_threshold","frac_pos","frac_neg","frac_below_threshold"))
+    expect_true(sum(binarized_results$bsummary$frac_pos > 0.4) == 3)
+  }
+)
+
+test_that(
+  "binarize_hash_matrix converts a matrix of values to a binary matrix using reference htos",
+  {
+    valid_htos <- totalseq_a_human()$hto_barcode
+    binarized_results <- binarize_hash_matrix(test_hto_mat,
+                                              valid_htos = valid_htos)
+
+    expect_true(class(binarized_results) == "list")
+    expect_length(binarized_results, 2)
+    expect_equal(names(binarized_results), c("bmat", "bsummary"))
+
+    expect_true(class(binarized_results$bmat) == "dgCMatrix")
+    expect_equal(ncol(binarized_results$bmat), ncol(test_hto_mat))
+    expect_equal(nrow(binarized_results$bmat), length(valid_htos))
+    expect_identical(rownames(binarized_results$bmat), valid_htos)
+    expect_identical(colnames(binarized_results$bmat), colnames(test_hto_mat))
+    expect_true(all(unique(binarized_results$bmat@x) %in% c(0,1)))
+
+    expect_true(class(binarized_results$bsummary) == "data.frame")
+    expect_equal(nrow(binarized_results$bsummary), length(valid_htos))
+    expect_identical(binarized_results$bsummary$hto_barcode, valid_htos)
+    expect_identical(names(binarized_results$bsummary),
+                     c("hto_barcode","cutoff","n_pos","n_neg","n_below_threshold",
+                       "frac_pos","frac_neg","frac_below_threshold"))
     expect_true(sum(binarized_results$bsummary$frac_pos > 0.4) == 3)
   }
 )

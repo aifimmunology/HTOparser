@@ -60,13 +60,53 @@ binarize_hash <- function(x,
   res
 }
 
+#' Add zero values for missing HTOs to a matrix
+#'
+#' @param mat A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells
+#' @param valid_htos A character vector of valid hto sequences.
+#'
+#' @return a dgCMatrix of HTO counts with rows equal to valid_htos.
+#' @export
+#'
+add_missing_hto_rows <- function(mat,
+                                 valid_htos) {
+
+  assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(class(valid_htos) == "character")
+
+  if(class(mat) == "dgCMatrix") {
+    mat <- as(mat, "matrix")
+  }
+
+
+  missing_htos <- setdiff(valid_htos, rownames(bmat))
+  if(length(missing_htos) > 0) {
+
+    missing_mat <- matrix(0,
+                          nrow = length(missing_htos),
+                          ncol = ncol(mat))
+    rownames(missing_mat) <- missing_htos
+    colnames(missing_mat) <- colnames(bmat)
+
+    mat <- rbind(mat,
+                 missing_mat)
+  }
+
+  mat <- mat[valid_htos,]
+
+  as(mat,"dgCMatrix")
+}
+
 #' Binarize a matrix of hash counts
 #'
 #' If cutoff values are provided, they will be used. If not, cutoffs will be determined
 #' using select_hash_cutoff()
 #'
 #' @param mat A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells
-#' @param cutoff_vals (optional) a named vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
+#' @param valid_htos (optional) a character vector of valid hto sequences. Default is NULL, which will use all sequences provided as rownames(mat).
+#' @param min_cut a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.
+#' @param cutoff_vals (optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
+#' Default is NULL, which will use select_hash_cutoff() to determine cutoff values.
 #'
 #' @return A list containing two objects:
 #' \itemize{
@@ -76,12 +116,21 @@ binarize_hash <- function(x,
 #' @export
 #'
 binarize_hash_matrix <- function(mat,
+                                 valid_htos = NULL,
+                                 min_cut = 10,
                                  cutoff_vals = NULL) {
 
   assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
 
   if(class(mat) == "dgCMatrix") {
     mat <- as(mat, "matrix")
+  }
+
+  if(!is.null(valid_htos)) {
+    assertthat::assert_that(is.character(valid_htos))
+    mat <- mat[rownames(mat) %in% valid_htos,]
+  } else {
+    valid_htos <- rownames(mat)
   }
 
   if(!is.null(cutoff_vals)) {
@@ -93,7 +142,8 @@ binarize_hash_matrix <- function(mat,
   } else {
     cutoff_vals <- apply(mat,
                          1,
-                         select_hash_cutoff)
+                         select_hash_cutoff,
+                         min_cut = min_cut)
   }
 
   bmat <- matrix(as.numeric(mat > cutoff_vals),
@@ -106,8 +156,31 @@ binarize_hash_matrix <- function(mat,
                          cutoff = cutoff_vals,
                          n_pos = rowSums(bmat),
                          n_neg = ncol(bmat) - rowSums(bmat),
+                         n_below_threshold = rowSums(mat < min_cut),
                          frac_pos = rowSums(bmat) / ncol(bmat),
-                         frac_neg = (ncol(bmat) - rowSums(bmat)) / ncol(bmat))
+                         frac_neg = (ncol(bmat) - rowSums(bmat)) / ncol(bmat),
+                         frac_below_threshold = rowSums(mat < min_cut) / ncol(bmat))
+
+  missing_htos <- setdiff(valid_htos, rownames(bmat))
+  if(length(missing_htos) > 0) {
+    missing_summary <- data.frame(hto_barcode = missing_htos,
+                                  cutoff = 0,
+                                  n_pos = 0,
+                                  n_neg = ncol(bmat),
+                                  n_below_threshold = ncol(bmat),
+                                  frac_pos = 0,
+                                  frac_neg = 0,
+                                  frac_below_threshold = 0)
+    bsummary <- rbind(bsummary,
+                      missing_summary)
+
+  }
+
+  bmat <- add_missing_hto_rows(bmat,
+                               valid_htos)
+
+  bsummary <- bsummary[match(valid_htos, bsummary$hto_barcode),]
+  bmat <- bmat[valid_htos,]
 
   list(bmat = as(bmat, "dgCMatrix"),
        bsummary = bsummary)
