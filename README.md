@@ -60,11 +60,11 @@ colnames(test_hto_table) <- c("count","cell_barcode","hto_barcode")
 
 ### BioLegend TotalSeq References
 
-CSV files with reference information for the TotalSeqA Hash Tag Oligo sequences are stored in `/inst/data/`. They can be loaded into R as a data.frame using:
+CSV files with reference information for the TotalSeqA Hash Tag Oligo sequences are stored in `/inst/data/`, and have convenient wrapper functions to make them easy to load:
 ```
-human_totalseq_ref <- read.csv(system.file("data/TotalSeqA_human_barcodes.csv"))
-mouse_totalseq_ref <- read.csv(system.file("data/TotalSeqA_mouse_barcodes.csv"))
-biotin_totalseq_ref <- read.csv(system.file("data/TotalSeqA_biotin_barcodes.csv"))
+human_totalseq_ref <- totalseq_a_human()
+mouse_totalseq_ref <- totalseq_a_mouse()
+biotin_totalseq_ref <- totalseq_a_biotin()
 
 ```
 
