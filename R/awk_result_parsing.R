@@ -75,7 +75,7 @@ barcode_table_to_matrix <- function(dt,
                                     valid_htos) {
 
   assertthat::assert_that("data.table" %in% class(dt))
-  assertthat::assert_that(c("count","cell_barcode","hto_barcode") %in% colnames(dt))
+  assertthat::assert_that(all(c("count","cell_barcode","hto_barcode") %in% colnames(dt)))
   assertthat::assert_that(class(valid_htos) == "character")
 
   # Sort the hto table by cell barcode and hto barcode

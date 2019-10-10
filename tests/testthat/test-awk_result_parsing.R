@@ -80,6 +80,17 @@ test_that(
 test_that(
   "barcode_table_to_matrix converts a barcode table to a dgCMatrix",
   {
+    ff_result <- fuzzy_filtering(test_hto_table,
+                                 match_column = "hto_barcode",
+                                 match_values = valid_barcodes,
+                                 max_distance = 1)
 
+    mat_result <- barcode_table_to_matrix(ff_result,
+                                          valid_htos = valid_barcodes)
+
+    expect_true(class(mat_result) == "dgCMatrix")
+    expect_equal(nrow(mat_result), length(valid_barcodes))
+    expect_equal(ncol(mat_result), length(unique(ff_result$cell_barcode)))
+    expect_equal(length(mat_result@x), nrow(ff_result))
   }
 )
