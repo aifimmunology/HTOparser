@@ -70,6 +70,20 @@ test_that(
     binarized_matrix <- binarize_hash_matrix(test_hto_mat)$bmat
 
     hash_categories <- categorize_binary_hash_matrix(binarized_matrix)
+
+    expect_true(class(hash_categories) == "list")
+    expect_length(hash_categories, 2)
+
+    expect_true(class(hash_categories$hash_category_table) == "data.frame")
+    expect_equal(nrow(hash_categories$hash_category_table), ncol(test_hto_mat))
+    expect_equal(length(hash_categories$hash_category_table), 3)
+    expect_identical(names(hash_categories$hash_category_table),
+                     c("cell_barcode","hto_category","hto_barcode"))
+
+    expect_true(class(hash_categories$hash_summary) == "data.frame")
+    expect_true(nrow(hash_categories$hash_summary) == 5)
+    expect_identical(hash_categories$hash_summary$hto_category,
+                     c("no_hash","singlet","doublet","multiplet","missing"))
   }
 )
 

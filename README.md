@@ -26,7 +26,7 @@ devtools::install_github("aifimmunology/HTOparser")
 ```
 ## Test Data
 
-This package includes test datasets that can be used for writing tests, vignettes, or demos.
+This package includes test datasets that can be used for writing tests, vignettes, or demos. These files are stored in `/inst/testdata/`.
 
 ### CITE-seq-Count
 

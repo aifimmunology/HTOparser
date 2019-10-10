@@ -152,8 +152,8 @@ categorize_binary_hash_matrix <- function(bmat) {
                        sequence <- paste(rownames(bmat)[binary_hash_scores == 1],
                                          collapse = ";")
                      }
-                     data.frame(hash_category = category,
-                                hash_sequence = sequence)
+                     data.frame(hto_category = category,
+                                hto_barcode = sequence)
                    })
 
   hash_category_table <- do.call("rbind",
@@ -162,16 +162,28 @@ categorize_binary_hash_matrix <- function(bmat) {
   hash_category_table <- cbind(data.frame(cell_barcode = colnames(bmat)),
                                hash_category_table)
 
-  category_count_table <- table(hash_category_table$hash_category)
-  hash_summary <- data.frame(hash_category = names(category_count_table),
+  category_count_table <- table(hash_category_table$hto_category)
+  hash_summary <- data.frame(hto_category = names(category_count_table),
                              n_category = as.numeric(category_count_table),
                              frac_category = as.numeric(category_count_table) / sum(category_count_table))
 
-  missing_summary <- data.frame(hash_category = "missing",
+  missing_summary <- data.frame(hto_category = "missing",
                                 n_category = sum(is.na(hash_category_table$hash_category)),
                                 frac_category = sum(is.na(hash_category_table$hash_category)) / nrow(hash_category_table))
 
   hash_summary <- rbind(hash_summary, missing_summary)
+
+  required_categories <- c("no_hash","singlet","doublet","multiplet","missing")
+  missing_categories <- setdiff(required_categories, hash_summary$hto_category)
+  if(length(missing_categories) > 0) {
+    zero_summary <- data.frame(hto_category = missing_categories,
+                               n_category = 0,
+                               frac_category = 0)
+    hash_summary <- rbind(hash_summary,
+                          zero_summary)
+  }
+
+  hash_summary <- hash_summary[match(required_categories, hash_summary$hto_category),]
 
   list(hash_category_table = hash_category_table,
        hash_summary = hash_summary)
