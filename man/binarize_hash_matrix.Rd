@@ -4,12 +4,18 @@
 \alias{binarize_hash_matrix}
 \title{Binarize a matrix of hash counts}
 \usage{
-binarize_hash_matrix(mat, cutoff_vals = NULL)
+binarize_hash_matrix(mat, valid_htos = NULL, min_cut = 10,
+  cutoff_vals = NULL)
 }
 \arguments{
 \item{mat}{A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells}
 
-\item{cutoff_vals}{(optional) a named vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).}
+\item{valid_htos}{(optional) a character vector of valid hto sequences. Default is NULL, which will use all sequences provided as rownames(mat).}
+
+\item{min_cut}{a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.}
+
+\item{cutoff_vals}{(optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
+Default is NULL, which will use select_hash_cutoff() to determine cutoff values.}
 }
 \value{
 A list containing two objects:

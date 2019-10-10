@@ -5,9 +5,11 @@
 #' @return a data.table with reference information
 #' @export
 #'
+#' @importFrom data.table fread
+#'
 totalseq_a_human <- function() {
   dt <- fread(
-    system.file("data/TotalSeqA_human_barcodes.csv",
+    system.file("reference/TotalSeqA_human_barcodes.csv",
                 package = "HTOparser")
     )
   dt[order(dt$hto_id),]
@@ -18,9 +20,11 @@ totalseq_a_human <- function() {
 #' @return a data.table with reference information
 #' @export
 #'
+#' @importFrom data.table fread
+#'
 totalseq_a_mouse <- function() {
   dt <- fread(
-    system.file("data/TotalSeqA_mouse_barcodes.csv",
+    system.file("reference/TotalSeqA_mouse_barcodes.csv",
                 package = "HTOparser")
   )
   dt[order(dt$hto_id),]
@@ -31,9 +35,11 @@ totalseq_a_mouse <- function() {
 #' @return a data.table with reference information
 #' @export
 #'
+#' @importFrom data.table fread
+#'
 totalseq_a_biotin <- function() {
   dt <- fread(
-    system.file("data/TotalSeqA_biotin_barcodes.csv",
+    system.file("reference/TotalSeqA_biotin_barcodes.csv",
                 package = "HTOparser")
   )
   dt[order(dt$hto_id),]

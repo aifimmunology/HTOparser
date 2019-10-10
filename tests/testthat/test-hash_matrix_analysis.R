@@ -1,6 +1,5 @@
 context("hash_matrix_analysis")
 library(HTOparser)
-library(data.table)
 
 # load test data
 test_hto_table <- fread(system.file("testdata/CITE-seq_count_matrix.csv.gz",
@@ -23,7 +22,6 @@ test_that(
     expect_length(cutoff, 1)
   }
 )
-
 
 test_that(
   "binarize_hash converts a vector of values to binary values based on a cutoff",

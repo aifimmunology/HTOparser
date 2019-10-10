@@ -10,5 +10,5 @@ totalseq_a_human()
 a data.table with reference information
 }
 \description{
-Load BioLegend TotalSeq A reference table for human hash tag oligos (HTO)
+Note: there is no Hashtag 11 in the human HTO set.
 }

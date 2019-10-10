@@ -79,14 +79,14 @@ add_missing_hto_rows <- function(mat,
   }
 
 
-  missing_htos <- setdiff(valid_htos, rownames(bmat))
+  missing_htos <- setdiff(valid_htos, rownames(mat))
   if(length(missing_htos) > 0) {
 
     missing_mat <- matrix(0,
                           nrow = length(missing_htos),
                           ncol = ncol(mat))
     rownames(missing_mat) <- missing_htos
-    colnames(missing_mat) <- colnames(bmat)
+    colnames(missing_mat) <- colnames(mat)
 
     mat <- rbind(mat,
                  missing_mat)
