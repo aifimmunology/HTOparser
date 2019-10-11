@@ -5,5 +5,8 @@
 #' @return no return
 #' @export
 stm <- function(x) {
+  assertthat::assert_that(class(x) == "character")
+  assertthat::assert_that(length(x) == 1)
+
   write(paste0("[",Sys.time(),"] ",x), stderr())
 }
