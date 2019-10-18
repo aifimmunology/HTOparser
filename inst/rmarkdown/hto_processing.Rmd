@@ -35,7 +35,7 @@ stm("Starting HTO count processing")
 ```
 
 Set knitting directory
-```{r Set knitr directory, include=FALSE}
+```{r Set knitr directory}
 knitr::opts_knit$set(root.dir = params$knit_dir)
 ```
 
@@ -69,6 +69,7 @@ if(in_type == "test_awk") {
 stm(paste0("IN  HTO count type:  ", in_type))
 stm(paste0("IN  HTO count file:  ", in_file))
 stm(paste0("IN  HTO barcode key: ", in_key))
+stm(paste0("OUT knitr root:      ", knitr::opts_knit$get("root.dir")))
 stm(paste0("OUT Count matrix:    ", out_mat))
 stm(paste0("OUT Category table:  ", out_tbl))
 ```
