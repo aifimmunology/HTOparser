@@ -16,12 +16,6 @@ params:
   out_tbl: tempfile(fileext = ".csv")
   knit_dir: tempdir()
 ---
-Set knitting directory
-```{r Set knitr directory}
-knitr::opts_knit$set(root.dir = params$knit_dir)
-stm(paste0("working directory: ", getwd()))
-
-```
 
 Load required libraries
 ```{r Load Libraries}
