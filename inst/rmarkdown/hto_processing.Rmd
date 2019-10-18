@@ -36,7 +36,7 @@ stm("Starting HTO count processing")
 
 Set knitting directory
 ```{r Set knitr directory}
-knitr::opts_knit$set(root.dir = params$knit_dir)
+setwd(tempdir())
 ```
 
 Argument parsing
