@@ -14,6 +14,7 @@ params:
   in_key: system.file("testdata/CITE-seq_count_tags.csv", package = "HTOparser")
   out_mat: tempfile(fileext = ".csv")
   out_tbl: tempfile(fileext = ".csv")
+  knit_dir: "./"
 ---
 
 Load required libraries
@@ -31,6 +32,11 @@ quiet_library(cowplot)
 Declaring start
 ```{r Declare Start}
 stm("Starting HTO count processing")
+```
+
+Set knitting directory
+```{r Set knitr directory, include=FALSE}
+knitr::opts_knit$set(root.dir = params$knit_dir)
 ```
 
 Argument parsing
