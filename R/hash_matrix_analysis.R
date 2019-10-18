@@ -2,6 +2,7 @@
 #'
 #' @param x a numeric vector of hash count values
 #' @param min_cut a numeric value for the minimum number of counts to consider. Default is 10.
+#' @param min_fc a numeric value for the minimum expected fold change between the centers of the two clusters (positive and negative). Default is 4.
 #' @param seed a value to use as a random seed for k-means clustering. Default is 3030.
 #'
 #' @return a numeric value to use as a cutoff. If no values are above min_cut, returns max(x), otherwise returns max(x) for non-passing values.
@@ -9,11 +10,14 @@
 #'
 select_hash_cutoff <- function(x,
                                min_cut = 10,
+                               min_fc = 4,
                                seed = 3030) {
 
   assertthat::assert_that(class(x) == "numeric")
   assertthat::is.number(min_cut)
   assertthat::assert_that(length(min_cut) == 1)
+  assertthat::is.number(min_fc)
+  assertthat::assert_that(length(min_fc) == 1)
   assertthat::is.number(seed)
   assertthat::assert_that(length(seed) == 1)
 
@@ -26,8 +30,12 @@ select_hash_cutoff <- function(x,
     km <- stats::kmeans(log10(x_gt_cut), centers = 2)
     cl <- km$cluster
     high_cl <- which(km$centers == max(km$centers))
+    low_cl <- which(km$centers != max(km$centers))
 
-    res[x > min_cut][cl == high_cl] <- 1
+    fc <- km$centers[high_cl] - km$centers[low_cl]
+    if(fc > log10(min_fc)) {
+      res[x > min_cut][cl == high_cl] <- 1
+    }
   }
 
   if(sum(res) == 0) {
