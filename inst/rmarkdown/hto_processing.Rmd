@@ -14,7 +14,7 @@ params:
   in_key: system.file("testdata/CITE-seq_count_tags.csv", package = "HTOparser")
   out_mat: tempfile(fileext = ".csv")
   out_tbl: tempfile(fileext = ".csv")
-  knit_dir: "./"
+  knit_dir: tempdir()
 ---
 
 Load required libraries
