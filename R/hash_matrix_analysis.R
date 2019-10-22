@@ -269,3 +269,46 @@ categorize_binary_hash_matrix <- function(bmat) {
   list(hash_category_table = hash_category_table,
        hash_summary = hash_summary)
 }
+
+
+#' Generate a summary table with the number and fraction of singlets with each HTO barcode
+#'
+#' @param hash_category_table A hash category table data.frame as produced by categorize_binary_hash_matrix()
+#' @param valid_htos (optional) a character vector of valid hto sequences. Default is NULL, which will use unique barcodes in hash_category_table$hto_barcode.
+#'
+#' @return a data.frame with hto_barcode, n_singlets, and frac_singlets.
+#' @export
+#'
+make_singlet_summary <- function(hash_category_table,
+                                 valid_htos = NULL) {
+
+  assertthat::assert_that(class(hash_category_table) == "data.frame")
+
+  if(!is.null(valid_htos)) {
+    assertthat::assert_that(is.character(valid_htos))
+  } else {
+    valid_htos <- unique(hash_category_table$hto_barcodes)
+  }
+
+  hash_category_table <- as.data.table(hash_category_table)
+  hash_category_table <- hash_category_table[hash_category_table$hto_category == "singlet",]
+
+  singlet_counts <- hash_category_table[,
+                                        .(n_singlets = nrow(.SD)),
+                                        by = "hto_barcode"]
+
+  missing_htos <- setdiff(valid_htos, singlet_counts$hto_barcode)
+  if(length(missing_htos) > 0) {
+    missing_counts <- data.table(hto_barcode = missing_htos,
+                                 n_singlets = 0)
+    singlet_counts <- rbind(singlet_counts,
+                            missing_counts)
+  }
+
+  singlet_counts$frac_singlets <- singlet_counts$n_singlets / sum(singlet_counts$n_singlets)
+
+  singlet_counts <- singlet_counts[match(valid_htos, singlet_counts$hto_barcode),]
+  singlet_counts <- as.data.frame(singlet_counts)
+
+  singlet_counts
+}
