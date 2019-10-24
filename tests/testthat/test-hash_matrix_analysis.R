@@ -132,3 +132,24 @@ test_that(
 )
 
 
+test_that(
+  "make_singlet_summary reduces a category table to a summary of singlets for each hto barcode",
+  {
+    binarized_matrix <- binarize_hash_matrix(test_hto_mat)$bmat
+
+    hash_categories <- categorize_binary_hash_matrix(binarized_matrix)
+
+    valid_htos <- totalseq_a_human()$hto_barcode
+
+    singlet_summary <- make_singlet_summary(hash_category_table = hash_categories$hash_category_table,
+                                            valid_htos = valid_htos)
+
+
+    expect_true(class(singlet_summary) == "data.frame")
+    expect_equal(nrow(singlet_summary), length(valid_htos))
+    expect_equal(length(singlet_summary), 3)
+    expect_identical(names(singlet_summary),
+                     c("hto_barcode","n_singlets","frac_singlets"))
+    expect_true(sum(singlet_summary$n_singlets > 0) == 3)
+  }
+)
