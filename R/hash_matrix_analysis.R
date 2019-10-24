@@ -131,6 +131,7 @@ binarize_hash_matrix <- function(mat,
                                  expect_equal_loading = TRUE) {
 
   assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(class(expect_equal_loading) == "logical")
 
   if(class(mat) == "dgCMatrix") {
     mat <- as(mat, "matrix")
@@ -150,6 +151,9 @@ binarize_hash_matrix <- function(mat,
 
     cutoff_vals <- cutoff_vals[rownames(mat)]
   } else {
+    assertthat::assert_that(class(min_cut) == "numeric")
+    assertthat::assert_that(length(min_cut) == 1)
+
     cutoff_vals <- apply(mat,
                          1,
                          select_hash_cutoff,
