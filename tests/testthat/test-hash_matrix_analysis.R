@@ -2,20 +2,20 @@ context("hash_matrix_analysis")
 library(HTOparser)
 
 # load test data
-test_hto_table <- fread(system.file("testdata/CITE-seq_count_matrix.csv.gz",
+test_hto_table <- fread(system.file("testdata/CITE-seq_count_14hash_matrix.csv.gz",
                                     package = "HTOparser"))
-test_hto_mat <- as(as.matrix(test_hto_table[1:11,-1]), "dgCMatrix")
+test_hto_mat <- as(as.matrix(test_hto_table[1:14,-1]), "dgCMatrix")
 
 test_hto_key <- fread(system.file("testdata/CITE-seq_count_tags.csv",
                                   package = "HTOparser"),
                       header = FALSE)
 
-rownames(test_hto_mat) <- test_hto_key$V1[match(test_hto_table[[1]][1:11], test_hto_key$V2)]
+rownames(test_hto_mat) <- test_hto_key$V1[match(test_hto_table[[1]][1:14], test_hto_key$V2)]
 
 test_that(
   "select_hash_cutoff selects a cutoff to split HTO values",
   {
-    cutoff <- select_hash_cutoff(test_hto_mat[10,],
+    cutoff <- select_hash_cutoff(test_hto_mat[1,],
                                  min_cut = 10)
 
     expect_true(class(cutoff) == "numeric")
@@ -75,7 +75,7 @@ test_that(
     expect_identical(binarized_results$bsummary$hto_barcode, rownames(test_hto_mat))
     expect_identical(names(binarized_results$bsummary),
                      c("hto_barcode","cutoff","n_pos","n_neg","n_below_threshold","frac_pos","frac_neg","frac_below_threshold"))
-    expect_true(sum(binarized_results$bsummary$frac_pos > 0.4) == 3)
+    expect_true(sum(binarized_results$bsummary$frac_pos > 0.04) == 12)
   }
 )
 
@@ -84,7 +84,8 @@ test_that(
   {
     valid_htos <- totalseq_a_human()$hto_barcode
     binarized_results <- binarize_hash_matrix(test_hto_mat,
-                                              valid_htos = valid_htos)
+                                              valid_htos = valid_htos,
+                                              expect_equal_loading = TRUE)
 
     expect_true(class(binarized_results) == "list")
     expect_length(binarized_results, 2)
@@ -103,10 +104,39 @@ test_that(
     expect_identical(names(binarized_results$bsummary),
                      c("hto_barcode","cutoff","n_pos","n_neg","n_below_threshold",
                        "frac_pos","frac_neg","frac_below_threshold"))
-    expect_true(sum(binarized_results$bsummary$frac_pos > 0.4) == 3)
+    expect_true(sum(binarized_results$bsummary$frac_pos > 0.04) == 12)
   }
 )
 
+test_that(
+  "binarize_hash_matrix over-represents a trimodal result if expect_equal_loading = FALSE",
+  {
+    valid_htos <- totalseq_a_human()$hto_barcode
+    binarized_results <- binarize_hash_matrix(test_hto_mat,
+                                              valid_htos = valid_htos,
+                                              expect_equal_loading = FALSE)
+
+    expect_true(class(binarized_results) == "list")
+    expect_length(binarized_results, 2)
+    expect_equal(names(binarized_results), c("bmat", "bsummary"))
+
+    expect_true(class(binarized_results$bmat) == "dgCMatrix")
+    expect_equal(ncol(binarized_results$bmat), ncol(test_hto_mat))
+    expect_equal(nrow(binarized_results$bmat), length(valid_htos))
+    expect_identical(rownames(binarized_results$bmat), valid_htos)
+    expect_identical(colnames(binarized_results$bmat), colnames(test_hto_mat))
+    expect_true(all(unique(binarized_results$bmat@x) %in% c(0,1)))
+
+    expect_true(class(binarized_results$bsummary) == "data.frame")
+    expect_equal(nrow(binarized_results$bsummary), length(valid_htos))
+    expect_identical(binarized_results$bsummary$hto_barcode, valid_htos)
+    expect_identical(names(binarized_results$bsummary),
+                     c("hto_barcode","cutoff","n_pos","n_neg","n_below_threshold",
+                       "frac_pos","frac_neg","frac_below_threshold"))
+
+    expect_true(max(binarized_results$bsummary$n_pos) > 2e4)
+  }
+)
 
 test_that(
   "categorize_binary_hash_matrix converts a binary matrix to categorical results",
@@ -150,6 +180,6 @@ test_that(
     expect_equal(length(singlet_summary), 3)
     expect_identical(names(singlet_summary),
                      c("hto_barcode","n_singlets","frac_singlets"))
-    expect_true(sum(singlet_summary$n_singlets > 0) == 3)
+    expect_true(sum(singlet_summary$n_singlets > 0) == 13)
   }
 )

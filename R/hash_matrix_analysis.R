@@ -114,6 +114,7 @@ add_missing_hto_rows <- function(mat,
 #' @param valid_htos (optional) a character vector of valid hto sequences. Default is NULL, which will use all sequences provided as rownames(mat).
 #' @param min_cut a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.
 #' @param cutoff_vals (optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
+#' @param expect_equal_loading a logical value indicating if equal loading is expected. This will try to correct overrepresented hashes only (not under-represented). Default is TRUE.
 #' Default is NULL, which will use select_hash_cutoff() to determine cutoff values.
 #'
 #' @return A list containing two objects:
@@ -126,9 +127,11 @@ add_missing_hto_rows <- function(mat,
 binarize_hash_matrix <- function(mat,
                                  valid_htos = NULL,
                                  min_cut = 10,
-                                 cutoff_vals = NULL) {
+                                 cutoff_vals = NULL,
+                                 expect_equal_loading = TRUE) {
 
   assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(class(expect_equal_loading) == "logical")
 
   if(class(mat) == "dgCMatrix") {
     mat <- as(mat, "matrix")
@@ -148,6 +151,9 @@ binarize_hash_matrix <- function(mat,
 
     cutoff_vals <- cutoff_vals[rownames(mat)]
   } else {
+    assertthat::assert_that(class(min_cut) == "numeric")
+    assertthat::assert_that(length(min_cut) == 1)
+
     cutoff_vals <- apply(mat,
                          1,
                          select_hash_cutoff,
@@ -159,6 +165,26 @@ binarize_hash_matrix <- function(mat,
                  nrow = nrow(mat))
   rownames(bmat) <- rownames(mat)
   colnames(bmat) <- colnames(mat)
+
+  if(expect_equal_loading) {
+    # Try to correct cutoff if one appears overloaded
+    # This is likely to occur if one hash has a high background population.
+    n_pos <- rowSums(bmat)
+
+    while(max(n_pos) > median(n_pos[n_pos > 0]) * 4) {
+      too_high <- which(n_pos == max(n_pos))
+      cutoff_vals[too_high] <- select_hash_cutoff(mat[too_high,],
+                                                  min_cut <- cutoff_vals[too_high])
+
+      bmat <- matrix(as.numeric(mat > cutoff_vals),
+                     ncol = ncol(mat),
+                     nrow = nrow(mat))
+      rownames(bmat) <- rownames(mat)
+      colnames(bmat) <- colnames(mat)
+
+      n_pos <- rowSums(bmat)
+    }
+  }
 
   bsummary <- data.frame(hto_barcode = rownames(bmat),
                          cutoff = cutoff_vals,

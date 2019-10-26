@@ -5,7 +5,7 @@
 \title{Binarize a matrix of hash counts}
 \usage{
 binarize_hash_matrix(mat, valid_htos = NULL, min_cut = 10,
-  cutoff_vals = NULL)
+  cutoff_vals = NULL, expect_equal_loading = TRUE)
 }
 \arguments{
 \item{mat}{A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells}
@@ -14,7 +14,9 @@ binarize_hash_matrix(mat, valid_htos = NULL, min_cut = 10,
 
 \item{min_cut}{a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.}
 
-\item{cutoff_vals}{(optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
+\item{cutoff_vals}{(optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).}
+
+\item{expect_equal_loading}{a logical value indicating if equal loading is expected. This will try to correct overrepresented hashes only (not under-represented). Default is TRUE.
 Default is NULL, which will use select_hash_cutoff() to determine cutoff values.}
 }
 \value{
