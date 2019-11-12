@@ -1,7 +1,7 @@
 Package: HTOparser
 Type: Package
 Title: HTO Parsing functions for scRNA-seq data
-Version: 1.0.4
+Version: 1.0.5
 Author: Lucas T. Graybuck <lucasg@alleninstitute.org>
 Maintainer: Lucas T. Graybuck <lucasg@alleninstitute.org>
 Description: Parsing Hash-tag Oligos from single-cell RNA-seq Cell Hashing experiments.
