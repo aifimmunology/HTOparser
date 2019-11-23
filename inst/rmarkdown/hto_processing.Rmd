@@ -10,10 +10,10 @@ output:
     self_contained: true
 params:
   in_type: "no_params"
-  in_file: system.file("testdata/awk_pipeline_counts_table.csv.gz", package = "HTOparser")
-  in_key: system.file("testdata/CITE-seq_count_tags.csv", package = "HTOparser")
-  out_mat: tempfile(fileext = ".csv")
-  out_tbl: tempfile(fileext = ".csv")
+  in_file: NULL
+  in_key: NULL
+  out_mat: NULL
+  out_tbl: NULL
 ---
 
 Load required libraries
@@ -44,13 +44,13 @@ if(params$in_type == "no_params") {
 if(in_type == "test_awk") {
   in_type <- "awk"
   in_file <- system.file("testdata/awk_pipeline_counts_table.csv.gz", package = "HTOparser")
-  in_key  <- system.file("testdata/CITE-seq_count_tags.csv", package = "HTOparser")
+  in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   out_mat <- tempfile(fileext = ".csv")
   out_tbl <- tempfile(fileext = ".csv")
 } else if(in_type == "test_cite") {
   in_type <- "cite"
   in_file <- system.file("testdata/CITE-seq_count_matrix.csv.gz", package = "HTOparser")
-  in_key  <- system.file("testdata/CITE-seq_count_tags.csv", package = "HTOparser")
+  in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   out_mat <- tempfile(fileext = ".csv")
   out_tbl <- tempfile(fileext = ".csv")
 } else {
@@ -60,26 +60,27 @@ if(in_type == "test_awk") {
   out_tbl <- params$out_tbl
 }
 
-stm(paste0("IN  HTO count type:  ", in_type))
-stm(paste0("IN  HTO count file:  ", in_file))
-stm(paste0("IN  HTO barcode key: ", in_key))
-stm(paste0("OUT Count matrix:    ", out_mat))
-stm(paste0("OUT Category table:  ", out_tbl))
+stm(paste0("IN  HTO count type   : ", in_type))
+stm(paste0("IN  HTO count file   : ", in_file))
+stm(paste0("IN  HTO sample sheet : ", in_key))
+stm(paste0("OUT Count matrix     : ", out_mat))
+stm(paste0("OUT Category table   : ", out_tbl))
 ```
 
 ```{r Print arguments}
 print(c(
-    paste0("IN  HTO count type:  ", in_type),
-    paste0("IN  HTO count file:  ", in_file),
-    paste0("IN  HTO barcode key: ", in_key),
-    paste0("OUT Count matrix:    ", out_mat),
-    paste0("OUT Category table:  ", out_tbl))
-)
+  paste0("IN  HTO count type   : ", in_type),
+  paste0("IN  HTO count file   : ", in_file),
+  paste0("IN  HTO sample sheet : ", in_key),
+  paste0("OUT Count matrix     : ", out_mat),
+  paste0("OUT Category table   : ", out_tbl)
+))
 ```
 
 Load HTO reference
 ```{r Load HTO Reference, echo = FALSE, results = 'asis'}
 hto_ref <- totalseq_a_human()
+hto_key <- system.file("reference/TotalSeqA_human_hto_key.csv", package = "HTOparser")
 knitr::kable(hto_ref, caption = "Reference TotalSeq HTO Sequences")
 ```
 
@@ -87,7 +88,9 @@ knitr::kable(hto_ref, caption = "Reference TotalSeq HTO Sequences")
 Read input table/matrix and barcode key
 ```{r Read Input Files}
 in_hto_table <- fread(in_file)
-in_hto_key   <- fread(in_key, header = FALSE, col.names = c("hto_barcode", "hto_name"))
+in_hto_ss <- fread(in_key, col.names = c("pbmc_sample_id","batch_id","hto_name","pool_id"))
+in_hto_key <- fread(hto_key, header = FALSE, col.names = c("hto_barcode","hto_name"))
+in_hto_key <- in_hto_key[in_hto_ss, on = "hto_name"]
 
 if(in_type == "awk") {
   stm("Filtering input HTO table for valid barcodes")
@@ -120,8 +123,15 @@ binary_results <- binarize_hash_matrix(in_hto_mat,
 ```
 
 ```{r Print Hash Count Summary, echo = FALSE, results = 'asis'}
-rownames(binary_results$bsummary) <- NULL
-knitr::kable(binary_results$bsummary, caption = "Hash Count Summary")
+bsummary <- binary_results$bsummary
+bsummary$pbmc_sample_id <- in_hto_key$pbmc_sample_id[match(bsummary$hto_barcode, in_hto_key$hto_barcode)]
+bsummary <- setcolorder(bsummary,
+                        c("pbmc_sample_id","hto_barcode",
+                          "cutoff","n_pos","n_neg","n_below_threshold",
+                          "frac_pos","frac_neg","frac_below_threshold"))
+rownames(bsummary) <- NULL
+
+knitr::kable(bsummary, caption = "Hash Count Summary")
 ```
 
 Generate plots for distributions of each hash
@@ -131,13 +141,14 @@ plot_list <- lapply(
   1:nrow(hto_ref),
   function(x) {
     barcode <- hto_ref$hto_barcode[x]
+    sample_id <- in_hto_key$pbmc_sample_id[in_hto_key$hto_barcode == barcode]
     vals <- in_hto_mat[barcode,]
     
     n_vals_below_min_cut <- sum(vals <= 10)
     vals_above_min_cut <- vals[vals > 10]
     
     if(length(vals_above_min_cut) > 0) {
-      cutoff <- binary_results$bsummary$cutoff[binary_results$bsummary$hto_barcode == barcode]
+      cutoff <- bsummary$cutoff[bsummary$hto_barcode == barcode]
       
       val_df <- data.frame(vals = log10(vals_above_min_cut))
       cut_df <- data.frame(cutoff = log10(cutoff))
@@ -155,7 +166,7 @@ plot_list <- lapply(
                            limits = c(0,5)) +
         scale_fill_identity() +
         scale_color_identity() +
-        ggtitle(barcode) +
+        ggtitle(paste(sample_id, "|", barcode)) +
         theme_bw(base_size = 8)
     } else {
       text_df <- data.frame(x = 2.5,
@@ -171,7 +182,7 @@ plot_list <- lapply(
                            limits = c(0,5)) +
         scale_y_continuous("count",
                            limits = c(0,1)) +
-        ggtitle(barcode) +
+        ggtitle(paste(sample_id, "|", barcode)) +
         theme_bw(base_size = 8)
     }
   }
@@ -192,6 +203,7 @@ Convert hashes to category calls
 stm("Converting binary results to categories")
 category_results <- categorize_binary_hash_matrix(binary_results$bmat)
 ```
+
 ```{r Display Category Summary, echo = FALSE, results = 'asis'}
 rownames(category_results$hash_summary) <- NULL
 knitr::kable(category_results$hash_summary, caption = "Hash Category Summary")
@@ -201,6 +213,12 @@ Generate singlet counts for each hash
 ```{r Count Singlets Per Hash}
 singlet_summary <- make_singlet_summary(category_results$hash_category_table,
                                         valid_htos = hto_ref$hto_barcode)
+singlet_summary$pbmc_sample_id <- in_hto_key$pbmc_sample_id[match(singlet_summary$hto_barcode, in_hto_key$hto_barcode)]
+singlet_summary <- setcolorder(singlet_summary,
+                               c("pbmc_sample_id",
+                                 "hto_barcode",
+                                 "n_singlets",
+                                 "frac_singlets"))
 ```
 
 ```{r Display Singlet Counts, echo = FALSE, results = 'asis'}
@@ -225,7 +243,9 @@ ggplot() +
   ggtitle("Singlet Counts") +
   scale_x_continuous("",
                      breaks = singlet_plot_data$x,
-                     labels = singlet_plot_data$hto_barcode) +
+                     labels = paste0(singlet_plot_data$hto_barcode,
+                                     "\n",
+                                     singlet_plot_data$pbmc_sample_id)) +
   scale_y_continuous("N Singlets") +
   theme_bw(base_size = 8) +
   theme(axis.text.x = element_text(angle = 90,
@@ -249,7 +269,25 @@ Write category table
 ```{r Write Category Table}
 stm(paste0("Writing category table to ", out_tbl))
 
-fwrite(category_results$hash_category_table,
+hto_barcodes_to_pbmc_ids <- function(x,
+                                     bc_key) {
+  x <- as.character(x)
+  res <- character()
+  for(i in seq_along(x)) {
+    bcs <- unlist(strsplit(x[i], ";")[[1]])
+    res[i] <- paste(bc_key$pbmc_sample_id[match(bcs, bc_key$hto_barcode)],
+                    collapse = ";")
+  }
+  res
+}
+
+hash_category_table <- category_results$hash_category_table
+hash_category_table$pbmc_sample_id <- hto_barcodes_to_pbmc_ids(hash_category_table$hto_barcode,
+                                                               in_hto_key)
+
+rownames(hash_category_table) <- NULL
+  
+fwrite(hash_category_table,
        file = out_tbl)
 ```
 
