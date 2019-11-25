@@ -214,6 +214,10 @@ binarize_hash_matrix <- function(mat,
                                valid_htos)
 
   bsummary <- bsummary[match(valid_htos, bsummary$hto_barcode),]
+  bsummary$frac_pos <- round(bsummary$frac_pos, 4)
+  bsummary$frac_neg <- round(bsummary$frac_neg, 4)
+  bsummary$frac_below_threshold <- round(bsummary$frac_below_threshold, 4)
+
   bmat <- bmat[valid_htos,]
 
   list(bmat = as(bmat, "dgCMatrix"),
@@ -292,6 +296,8 @@ categorize_binary_hash_matrix <- function(bmat) {
 
   hash_summary <- hash_summary[match(required_categories, hash_summary$hto_category),]
 
+  hash_summary$frac_category <- round(hash_summary$frac_category, 4)
+
   list(hash_category_table = hash_category_table,
        hash_summary = hash_summary)
 }
@@ -331,7 +337,7 @@ make_singlet_summary <- function(hash_category_table,
                             missing_counts)
   }
 
-  singlet_counts$frac_singlets <- singlet_counts$n_singlets / sum(singlet_counts$n_singlets)
+  singlet_counts$frac_singlets <- round(singlet_counts$n_singlets / sum(singlet_counts$n_singlets), 4)
 
   singlet_counts <- singlet_counts[match(valid_htos, singlet_counts$hto_barcode),]
   singlet_counts <- as.data.frame(singlet_counts)
