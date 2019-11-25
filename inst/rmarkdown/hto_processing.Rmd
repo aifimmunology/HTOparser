@@ -28,15 +28,11 @@ params:
 - [Write Outputs](#data_output)
 
 #### [QC Metrics and Plots](#qc_metrics)
-- [Well-Based QC](#well_qc)
-- [Read/UMI/Gene Stats](#rug_stats)
-- [Read/UMI/Gene Histograms](#rug_hists)
-- [Read/UMI/Gene Scatters](#rug_scatters)
-- [HTO-Based QC](#hash_qc)
-- [Counts](#counts)
-- [Reads](#reads)
-- [UMIs](#umis)
-- [Genes](#genes)
+- [Raw Count Summary](#hash_count_summary)
+- [HTO Count Distributions](#hash_hist_plot)
+- [HTO Category Summary](#cat_summary)
+- [Sample/HTO Singlet Counts](#singlet_counts)
+- [Sample/HTO Singlet Plot](#singlet_plot)
 
 #### [Session Info](#session_info)
 
