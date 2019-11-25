@@ -6,6 +6,7 @@ author:
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output:
   html_document:
+    code_folding: hide
     df_print: paged
     self_contained: true
 params:
@@ -16,7 +17,38 @@ params:
   out_tbl: NULL
 ---
 
-Load required libraries
+<a id="contents"></a>
+
+## Contents
+
+#### [Data Processing](#data_processing)
+- [Session Preparation](#session_preparation)
+- [Load Inputs](#load_inputs)
+- [Process HTO Data](#process data)
+- [Write Outputs](#data_output)
+
+#### [QC Metrics and Plots](#qc_metrics)
+- [Well-Based QC](#well_qc)
+- [Read/UMI/Gene Stats](#rug_stats)
+- [Read/UMI/Gene Histograms](#rug_hists)
+- [Read/UMI/Gene Scatters](#rug_scatters)
+- [HTO-Based QC](#hash_qc)
+- [Counts](#counts)
+- [Reads](#reads)
+- [UMIs](#umis)
+- [Genes](#genes)
+
+#### [Session Info](#session_info)
+
+<a id="data_processing"></a>
+
+## Data Processing
+
+<a id="session_preparation"></a>
+
+### Session Preparation
+
+#### Load libraries:
 ```{r Load Libraries}
 start_time <- Sys.time()
 
@@ -24,6 +56,7 @@ quiet_library <- function(...) {
   suppressPackageStartupMessages(library(...))
 }
 quiet_library(HTOparser)
+quiet_library(H5weaver)
 quiet_library(ggplot2)
 quiet_library(cowplot)
 ```
@@ -33,7 +66,7 @@ Declaring start
 stm("Starting HTO count processing")
 ```
 
-Argument parsing
+#### Argument parsing
 ```{r Parse Arguments}
 if(params$in_type == "no_params") {
   in_type <- "test_cite"
@@ -77,21 +110,41 @@ print(c(
 ))
 ```
 
-Load HTO reference
+[Return to Contents](#contents)
+
+<a id="load_inputs"></a>
+
+### Load Input Datasets
+
+#### HTO reference
 ```{r Load HTO Reference, echo = FALSE, results = 'asis'}
 hto_ref <- totalseq_a_human()
 hto_key <- system.file("reference/TotalSeqA_human_hto_key.csv", package = "HTOparser")
-knitr::kable(hto_ref, caption = "Reference TotalSeq HTO Sequences")
+
+qc_table(hto_ref)
 ```
 
-
-Read input table/matrix and barcode key
+#### Read input table/matrix and barcode key
 ```{r Read Input Files}
 in_hto_table <- fread(in_file)
 in_hto_ss <- fread(in_key, col.names = c("pbmc_sample_id","batch_id","hto_name","pool_id"))
 in_hto_key <- fread(hto_key, header = FALSE, col.names = c("hto_barcode","hto_name"))
 in_hto_key <- in_hto_key[in_hto_ss, on = "hto_name"]
+```
 
+#### Sample Sheet
+```{r}
+qc_table(in_hto_ss)
+```
+
+[Return to Contents](#contents)
+
+<a id="process_data"></a>
+
+### Process HTO Counts
+
+#### Convert input data to matrix
+```{r}
 if(in_type == "awk") {
   stm("Filtering input HTO table for valid barcodes")
   names(in_hto_table) <- c("count","cell_barcode","hto_barcode")
@@ -113,7 +166,7 @@ in_hto_mat <- add_missing_hto_rows(in_hto_mat,
                                    valid_htos = hto_ref$hto_barcode)
 ```
 
-Call positive and negative HTOs
+#### Call positive and negative HTOs
 ```{r Convert Matrix to Binary Calls}
 stm("Binarizing HTO counts to call positive and negative hashes")
 binary_results <- binarize_hash_matrix(in_hto_mat,
@@ -122,6 +175,64 @@ binary_results <- binarize_hash_matrix(in_hto_mat,
                                        cutoff_vals = NULL)
 ```
 
+#### Convert hashes to category calls
+```{r Convert Binary Matrix to Categories}
+stm("Converting binary results to categories")
+category_results <- categorize_binary_hash_matrix(binary_results$bmat)
+```
+
+[Return to Contents](#contents)
+
+<a id="data_output"></a>
+
+### Write Outputs
+
+#### Write count matrix
+```{r Write Count Matrix}
+stm(paste0("Writing count matrix to ", out_mat))
+out_hto_mat <- as(in_hto_mat, "matrix")
+out_hto_mat <- as.data.table(out_hto_mat)
+out_hto_mat <- cbind(data.table(hto_barcode = rownames(in_hto_mat)),
+                     out_hto_mat)
+fwrite(out_hto_mat,
+       file = out_mat)
+```
+
+#### Write category table
+```{r Write Category Table}
+stm(paste0("Writing category table to ", out_tbl))
+
+hto_barcodes_to_pbmc_ids <- function(x,
+                                     bc_key) {
+  x <- as.character(x)
+  res <- character()
+  for(i in seq_along(x)) {
+    bcs <- unlist(strsplit(x[i], ";")[[1]])
+    res[i] <- paste(bc_key$pbmc_sample_id[match(bcs, bc_key$hto_barcode)],
+                    collapse = ";")
+  }
+  res
+}
+
+hash_category_table <- category_results$hash_category_table
+hash_category_table$pbmc_sample_id <- hto_barcodes_to_pbmc_ids(hash_category_table$hto_barcode,
+                                                               in_hto_key)
+
+rownames(hash_category_table) <- NULL
+  
+fwrite(hash_category_table,
+       file = out_tbl)
+```
+
+[Return to Contents](#contents)
+
+<a id="qc_metrics"></a>
+
+## QC Tables and Plots
+
+<a id="hash_count_summary"></a>
+
+#### Hash Count Summary
 ```{r Print Hash Count Summary, echo = FALSE, results = 'asis'}
 bsummary <- binary_results$bsummary
 bsummary$pbmc_sample_id <- in_hto_key$pbmc_sample_id[match(bsummary$hto_barcode, in_hto_key$hto_barcode)]
@@ -131,10 +242,14 @@ bsummary <- setcolorder(bsummary,
                           "frac_pos","frac_neg","frac_below_threshold"))
 rownames(bsummary) <- NULL
 
-knitr::kable(bsummary, caption = "Hash Count Summary")
+qc_table(bsummary)
 ```
 
-Generate plots for distributions of each hash
+[Return to Contents](#contents)
+
+<a id="hash_hist_plot"></a>
+
+#### Generate plots
 ```{r Generate Distribution Plots}
 stm("Generating plots for report")
 plot_list <- lapply(
@@ -189,7 +304,7 @@ plot_list <- lapply(
 )
 ```
 
-Output density plots
+#### Hash Count Distribution Plots
 ```{r Display Plots, fig.height = 12, fig.width = 12}
 suppressWarnings(
   plot_grid(plotlist = plot_list,
@@ -198,18 +313,22 @@ suppressWarnings(
 )
 ```
 
-Convert hashes to category calls
-```{r Convert Binary Matrix to Categories}
-stm("Converting binary results to categories")
-category_results <- categorize_binary_hash_matrix(binary_results$bmat)
-```
+[Return to Contents](#contents)
 
+<a id="cat_summary"></a>
+
+#### Hash Category Summary
 ```{r Display Category Summary, echo = FALSE, results = 'asis'}
 rownames(category_results$hash_summary) <- NULL
-knitr::kable(category_results$hash_summary, caption = "Hash Category Summary")
+
+qc_table(category_results$hash_summary)
 ```
 
-Generate singlet counts for each hash
+[Return to Contents](#contents)
+
+<a id="singlet_counts"></a>
+
+### Sample/HTO Singlet Counts
 ```{r Count Singlets Per Hash}
 singlet_summary <- make_singlet_summary(category_results$hash_category_table,
                                         valid_htos = hto_ref$hto_barcode)
@@ -219,13 +338,15 @@ singlet_summary <- setcolorder(singlet_summary,
                                  "hto_barcode",
                                  "n_singlets",
                                  "frac_singlets"))
+
+qc_table(singlet_summary)
 ```
 
-```{r Display Singlet Counts, echo = FALSE, results = 'asis'}
-rownames(singlet_summary) <- NULL
-knitr::kable(singlet_summary, caption = "Singlet Hash Count Summary")
-```
+[Return to Contents](#contents)
 
+<a id="singlet_plot"></a>
+
+### Sample/HTO Singlet Counts Plot
 ```{r Plot Singlet Counts}
 singlet_plot_data <- singlet_summary
 singlet_plot_data$x <- 1:nrow(singlet_summary)
@@ -254,44 +375,12 @@ ggplot() +
 
 ```
 
-Write count matrix after some wrangling for data.table
-```{r Write Count Matrix}
-stm(paste0("Writing count matrix to ", out_mat))
-out_hto_mat <- as(in_hto_mat, "matrix")
-out_hto_mat <- as.data.table(out_hto_mat)
-out_hto_mat <- cbind(data.table(hto_barcode = rownames(in_hto_mat)),
-                     out_hto_mat)
-fwrite(out_hto_mat,
-       file = out_mat)
-```
+[Return to Contents](#contents)
 
-Write category table
-```{r Write Category Table}
-stm(paste0("Writing category table to ", out_tbl))
+<a id="session_info"></a>
 
-hto_barcodes_to_pbmc_ids <- function(x,
-                                     bc_key) {
-  x <- as.character(x)
-  res <- character()
-  for(i in seq_along(x)) {
-    bcs <- unlist(strsplit(x[i], ";")[[1]])
-    res[i] <- paste(bc_key$pbmc_sample_id[match(bcs, bc_key$hto_barcode)],
-                    collapse = ";")
-  }
-  res
-}
+## Session Information
 
-hash_category_table <- category_results$hash_category_table
-hash_category_table$pbmc_sample_id <- hto_barcodes_to_pbmc_ids(hash_category_table$hto_barcode,
-                                                               in_hto_key)
-
-rownames(hash_category_table) <- NULL
-  
-fwrite(hash_category_table,
-       file = out_tbl)
-```
-
-Session Info:
 ```{r Report Session Info}
 sessionInfo()
 ```
@@ -307,4 +396,6 @@ print(time_message)
 stm(time_message)
 stm("HTO count processing complete.")
 ```
+
+[Return to Contents](#contents)
 
