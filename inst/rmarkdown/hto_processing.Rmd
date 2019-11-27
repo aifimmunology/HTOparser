@@ -76,10 +76,16 @@ if(in_type == "test_awk") {
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   out_mat <- tempfile(fileext = ".csv")
   out_tbl <- tempfile(fileext = ".csv")
-} else if(in_type == "test_cite") {
-  in_type <- "cite"
+} else if(in_type == "test_cite-old") {
+  in_type <- "cite-old"
   in_file <- system.file("testdata/CITE-seq_count_matrix.csv.gz", package = "HTOparser")
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
+  out_mat <- tempfile(fileext = ".csv")
+  out_tbl <- tempfile(fileext = ".csv")
+} else if(in_type == "test_cite") {
+  in_type <- "cite"
+  in_file <- system.file("testdata/CITE-seq-Count_umi_mtx/", package = "HTOparser")
+  in_key <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   out_mat <- tempfile(fileext = ".csv")
   out_tbl <- tempfile(fileext = ".csv")
 } else {
@@ -122,7 +128,14 @@ qc_table(hto_ref)
 
 #### Read input table/matrix and barcode key
 ```{r Read Input Files}
-in_hto_table <- fread(in_file)
+if(in_type %in% c("awk","cite-old")) {
+  in_hto_table <- fread(in_file)
+} else if(in_type == "cite") {
+  in_dir <- file.path(in_file, "umi_count/")
+  in_hto_table <- read_csc_mtx(in_dir)
+  in_hto_table <- in_hto_table[rownames(in_hto_table) != "unmapped",]
+  rownames(in_hto_table) <- sub("-.+","",rownames(in_hto_table))
+}
 in_hto_ss <- fread(in_key, col.names = c("pbmc_sample_id","batch_id","hto_name","pool_id"))
 in_hto_key <- fread(hto_key, header = FALSE, col.names = c("hto_barcode","hto_name"))
 in_hto_key <- in_hto_key[in_hto_ss, on = "hto_name"]
@@ -152,11 +165,15 @@ if(in_type == "awk") {
   stm("Converting HTO table to matrix")
   in_hto_mat <- barcode_table_to_matrix(in_hto_table,
                                         valid_htos = hto_ref$hto_barcode)
-} else {
+} else if(in_type == "cite-old") {
   stm("Formatting HTO matrix and filtering for valid barcodes")
   in_hto_mat <- as.matrix(in_hto_table[,-1])
   in_hto_mat <- as(in_hto_mat, "dgCMatrix")
   rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(in_hto_table[[1]], in_hto_key$hto_name)]
+} else if(in_type == "cite") {
+  stm("Formatting HTO matrix and filtering for valid barcodes")
+  in_hto_mat <- as(in_hto_table, "dgCMatrix")
+  rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(rownames(in_hto_table), in_hto_key$hto_name)]
 }
 in_hto_mat <- add_missing_hto_rows(in_hto_mat,
                                    valid_htos = hto_ref$hto_barcode)
