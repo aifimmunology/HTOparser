@@ -67,7 +67,7 @@ stm("Starting HTO count processing")
 if(params$in_type == "no_params") {
   in_type <- "test_cite"
 } else {
-  in_type <- match.arg(params$in_type, choices = c("awk","cite","test_awk","test_cite"))
+  in_type <- match.arg(params$in_type, choices = c("awk","cite","cite-old","test_awk","test_cite"))
 }
 
 if(in_type == "test_awk") {
