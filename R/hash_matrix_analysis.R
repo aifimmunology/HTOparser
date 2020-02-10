@@ -1,6 +1,7 @@
 #' Select a cutoff for hash counts using automatic, k-means based splitting
 #'
 #' @param x a numeric vector of hash count values
+#' @param use_median_cut a logical value indicating whether or not to use the median value of x to set a minimum threshold.
 #' @param min_cut a numeric value for the minimum number of counts to consider. Default is 10.
 #' @param min_fc a numeric value for the minimum expected fold change between the centers of the two clusters (positive and negative). Default is 4.
 #' @param seed a value to use as a random seed for k-means clustering. Default is 3030.
@@ -9,11 +10,14 @@
 #' @export
 #'
 select_hash_cutoff <- function(x,
+                               use_median_cut = FALSE,
                                min_cut = 10,
                                min_fc = 4,
                                seed = 3030) {
 
   assertthat::assert_that(class(x) == "numeric")
+  assertthat::assert_that(class(use_median_cut) == "logical")
+  assertthat::assert_that(length(use_median_cut) == 1)
   assertthat::is.number(min_cut)
   assertthat::assert_that(length(min_cut) == 1)
   assertthat::is.number(min_fc)
@@ -22,6 +26,10 @@ select_hash_cutoff <- function(x,
   assertthat::assert_that(length(seed) == 1)
 
   res <- rep(0, length(x))
+
+  if(use_median_cut) {
+    min_cut <- median(x[x > 0])
+  }
 
   x_gt_cut <- x[x > min_cut]
 
@@ -112,6 +120,7 @@ add_missing_hto_rows <- function(mat,
 #'
 #' @param mat A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells
 #' @param valid_htos (optional) a character vector of valid hto sequences. Default is NULL, which will use all sequences provided as rownames(mat).
+#' @param use_median_cut a logical value indicating whether or not to use the median value of x to set a minimum threshold.
 #' @param min_cut a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.
 #' @param cutoff_vals (optional) a named numeric vector of cutoff values to apply. Length must be equal to nrow(mat), and names must exist in rownames(mat).
 #' @param expect_equal_loading a logical value indicating if equal loading is expected. This will try to correct overrepresented hashes only (not under-represented). Default is TRUE.
@@ -126,12 +135,15 @@ add_missing_hto_rows <- function(mat,
 #'
 binarize_hash_matrix <- function(mat,
                                  valid_htos = NULL,
+                                 use_median_cut = FALSE,
                                  min_cut = 10,
                                  cutoff_vals = NULL,
                                  expect_equal_loading = TRUE) {
 
   assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
   assertthat::assert_that(class(expect_equal_loading) == "logical")
+  assertthat::assert_that(class(use_median_cut) == "logical")
+  assertthat::assert_that(length(use_median_cut) == 1)
 
   if(class(mat) == "dgCMatrix") {
     mat <- as(mat, "matrix")
@@ -157,6 +169,7 @@ binarize_hash_matrix <- function(mat,
     cutoff_vals <- apply(mat,
                          1,
                          select_hash_cutoff,
+                         use_median_cut = use_median_cut,
                          min_cut = min_cut)
   }
 
@@ -174,7 +187,7 @@ binarize_hash_matrix <- function(mat,
     while(max(n_pos) > median(n_pos[n_pos > 0]) * 4) {
       too_high <- which(n_pos == max(n_pos))
       cutoff_vals[too_high] <- select_hash_cutoff(mat[too_high,],
-                                                  min_cut <- cutoff_vals[too_high])
+                                                  min_cut = cutoff_vals[too_high])
 
       bmat <- matrix(as.numeric(mat > cutoff_vals),
                      ncol = ncol(mat),

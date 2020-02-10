@@ -4,13 +4,15 @@
 \alias{binarize_hash_matrix}
 \title{Binarize a matrix of hash counts}
 \usage{
-binarize_hash_matrix(mat, valid_htos = NULL, min_cut = 10,
-  cutoff_vals = NULL, expect_equal_loading = TRUE)
+binarize_hash_matrix(mat, valid_htos = NULL, use_median_cut = FALSE,
+  min_cut = 10, cutoff_vals = NULL, expect_equal_loading = TRUE)
 }
 \arguments{
 \item{mat}{A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells}
 
 \item{valid_htos}{(optional) a character vector of valid hto sequences. Default is NULL, which will use all sequences provided as rownames(mat).}
+
+\item{use_median_cut}{a logical value indicating whether or not to use the median value of x to set a minimum threshold.}
 
 \item{min_cut}{a numeric value for the minimum number of counts to consider for select_hash_cutoff(). Default is 10.}
 
