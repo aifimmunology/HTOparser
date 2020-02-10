@@ -4,10 +4,13 @@
 \alias{select_hash_cutoff}
 \title{Select a cutoff for hash counts using automatic, k-means based splitting}
 \usage{
-select_hash_cutoff(x, min_cut = 10, min_fc = 4, seed = 3030)
+select_hash_cutoff(x, use_median_cut = FALSE, min_cut = 10,
+  min_fc = 4, seed = 3030)
 }
 \arguments{
 \item{x}{a numeric vector of hash count values}
+
+\item{use_median_cut}{a logical value indicating whether or not to use the median value of x to set a minimum threshold.}
 
 \item{min_cut}{a numeric value for the minimum number of counts to consider. Default is 10.}
 
