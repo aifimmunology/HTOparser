@@ -191,8 +191,7 @@ in_hto_mat <- add_missing_hto_rows(in_hto_mat,
 stm("Binarizing HTO counts to call positive and negative hashes")
 binary_results <- binarize_hash_matrix(in_hto_mat,
                                        valid_htos = hto_ref$hto_barcode,
-                                       min_cut = 10,
-                                       cutoff_vals = NULL)
+                                       use_median_cut = TRUE)
 ```
 
 #### Convert hashes to category calls
@@ -307,12 +306,13 @@ plot_list <- lapply(
     barcode <- hto_ref$hto_barcode[x]
     sample_id <- in_hto_key$pbmc_sample_id[in_hto_key$hto_barcode == barcode]
     vals <- in_hto_mat[barcode,]
+
+    cutoff <- bsummary$cutoff[bsummary$hto_barcode == barcode]
     
-    n_vals_below_min_cut <- sum(vals <= 10)
-    vals_above_min_cut <- vals[vals > 10]
+    n_vals_below_min_cut <- sum(vals <= 5)
+    vals_above_min_cut <- vals[vals > 5]
     
     if(length(vals_above_min_cut) > 0) {
-      cutoff <- bsummary$cutoff[bsummary$hto_barcode == barcode]
       
       val_df <- data.frame(vals = log10(vals_above_min_cut))
       cut_df <- data.frame(cutoff = log10(cutoff))
