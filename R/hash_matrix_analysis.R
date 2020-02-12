@@ -29,6 +29,9 @@ select_hash_cutoff <- function(x,
 
   if(use_median_cut) {
     min_cut <- median(x[x > 0])
+    if(is.na(min_cut)) {
+      min_cut <- 0
+    }
   }
 
   x_gt_cut <- x[x > min_cut]
