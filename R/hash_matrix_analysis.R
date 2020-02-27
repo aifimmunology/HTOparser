@@ -36,7 +36,7 @@ select_hash_cutoff <- function(x,
 
   x_gt_cut <- x[x > min_cut]
 
-  if(length(x_gt_cut) > 2) {
+  if(length(x_gt_cut) > 2 & var(x_gt_cut) > 0) {
     set.seed(seed)
     km <- stats::kmeans(log10(x_gt_cut), centers = 2)
     cl <- km$cluster
