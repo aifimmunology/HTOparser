@@ -1,9 +1,9 @@
 #' Select a cutoff for hash counts using automatic, k-means based splitting
 #'
 #' @param x a numeric vector of hash count values
-#' @param use_median_cut a logical value indicating whether or not to use the median value of x to set a minimum threshold.
+#' @param use_median_cut a logical value indicating whether or not to use the median value of x to set a minimum threshold. Default is FALSE.
 #' @param min_cut a numeric value for the minimum number of counts to consider. Default is 10.
-#' @param min_fc a numeric value for the minimum expected fold change between the centers of the two clusters (positive and negative). Default is 4.
+#' @param min_fc a numeric value for the minimum expected fold change between the centers of the two clusters (positive and negative). Default is 2.
 #' @param seed a value to use as a random seed for k-means clustering. Default is 3030.
 #'
 #' @return a numeric value to use as a cutoff. If no values are above min_cut, returns max(x), otherwise returns max(x) for non-passing values.
@@ -12,7 +12,7 @@
 select_hash_cutoff <- function(x,
                                use_median_cut = FALSE,
                                min_cut = 10,
-                               min_fc = 4,
+                               min_fc = 2,
                                seed = 3030) {
 
   assertthat::assert_that(class(x) == "numeric")
@@ -36,7 +36,7 @@ select_hash_cutoff <- function(x,
 
   x_gt_cut <- x[x > min_cut]
 
-  if(length(x_gt_cut) > 2) {
+  if(length(x_gt_cut) > 2 & var(x_gt_cut) > 0) {
     set.seed(seed)
     km <- stats::kmeans(log10(x_gt_cut), centers = 2)
     cl <- km$cluster
