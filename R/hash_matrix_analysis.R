@@ -12,7 +12,7 @@
 select_hash_cutoff <- function(x,
                                use_median_cut = FALSE,
                                min_cut = 10,
-                               min_fc = 4,
+                               min_fc = 2,
                                seed = 3030) {
 
   assertthat::assert_that(class(x) == "numeric")
