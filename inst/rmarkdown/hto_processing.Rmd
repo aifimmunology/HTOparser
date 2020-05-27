@@ -183,10 +183,11 @@ if(in_type == "awk") {
   rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(rownames(in_hto_table), in_hto_key$hto_name)]
 } else if(in_type == "barcounter") {
   stm("Formatting HTO matrix and filtering for valid barcodes")
-  in_hto_mat <- t(as.matrix(in_hto_table[,3:ncol(in_hto_table)]))
+  keep_cols <- colnames(in_hto_table)[colnames(in_hto_table) %in% in_hto_key$hto_name]
+  in_hto_mat <- t(as.matrix(in_hto_table[, ..keep_cols]))
   in_hto_mat <- as(in_hto_mat, "dgCMatrix")
   colnames(in_hto_mat) <- in_hto_table$cell_barcode
-  rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(rownames(in_hto_table), in_hto_key$hto_name)]
+  rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(rownames(in_hto_mat), in_hto_key$hto_name)]
 }
 in_hto_mat <- add_missing_hto_rows(in_hto_mat,
                                    valid_htos = hto_ref$hto_barcode)
