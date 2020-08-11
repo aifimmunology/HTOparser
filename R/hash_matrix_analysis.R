@@ -25,6 +25,10 @@ select_hash_cutoff <- function(x,
   assertthat::is.number(seed)
   assertthat::assert_that(length(seed) == 1)
 
+  if(sum(x == 0) == length(x)) {
+    return(0)
+  }
+
   res <- rep(0, length(x))
 
   if(use_median_cut) {
@@ -90,7 +94,7 @@ binarize_hash <- function(x,
 add_missing_hto_rows <- function(mat,
                                  valid_htos) {
 
-  assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(check_matrix(mat))
   assertthat::assert_that(class(valid_htos) == "character")
 
   if(class(mat) == "dgCMatrix") {
@@ -143,7 +147,7 @@ binarize_hash_matrix <- function(mat,
                                  cutoff_vals = NULL,
                                  expect_equal_loading = TRUE) {
 
-  assertthat::assert_that(class(mat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(check_matrix(mat))
   assertthat::assert_that(class(expect_equal_loading) == "logical")
   assertthat::assert_that(class(use_median_cut) == "logical")
   assertthat::assert_that(length(use_median_cut) == 1)
@@ -255,7 +259,7 @@ binarize_hash_matrix <- function(mat,
 #'
 categorize_binary_hash_matrix <- function(bmat) {
 
-  assertthat::assert_that(class(bmat) %in% c("matrix","dgCMatrix"))
+  assertthat::assert_that(check_matrix(bmat))
 
   if(class(bmat) == "dgCMatrix") {
     bmat <- as(bmat, "matrix")
