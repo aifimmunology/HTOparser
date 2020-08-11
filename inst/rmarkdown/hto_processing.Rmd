@@ -14,6 +14,7 @@ params:
   in_file: NULL
   in_key: NULL
   in_well: NULL
+  in_min_cutoff: NULL
   out_dir: NULL
 ---
 
@@ -76,23 +77,30 @@ if(in_type == "test_awk") {
   in_file <- system.file("testdata/awk_pipeline_counts_table.csv.gz", package = "HTOparser")
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
+  in_min_cutoff <- NULL
   out_dir <- tempdir()
 } else if(in_type == "test_cite-old") {
   in_type <- "cite-old"
   in_file <- system.file("testdata/CITE-seq_count_matrix.csv.gz", package = "HTOparser")
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
+  in_min_cutoff <- NULL
   out_dir <- tempdir()
 } else if(in_type == "test_cite") {
   in_type <- "cite"
   in_file <- system.file("testdata/CITE-seq-Count_umi_mtx/", package = "HTOparser")
   in_key <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
+  in_min_cutoff <- NULL
   out_dir <- tempdir()
 } else {
   in_file <- params$in_file
   in_key  <- params$in_key
   in_well <- params$in_well
+  if(is.null(params$in_min_cutoff)) {
+    in_min_cutoff <- "auto"
+  }
+  in_min_cutoff <- params$in_min_cutoff
   out_dir <- params$out_dir
 }
 
@@ -103,6 +111,8 @@ out_json <- file.path(out_dir, paste0(in_well, "_hto_processing_metrics.json"))
 stm(paste0("IN  HTO count type   : ", in_type))
 stm(paste0("IN  HTO count file   : ", in_file))
 stm(paste0("IN  HTO sample sheet : ", in_key))
+stm(paste0("IN  Well             : ", in_well))
+stm(paste0("IN  Min. Cutoff      : ", in_min_cutoff))
 stm(paste0("OUT Count matrix     : ", out_mat))
 stm(paste0("OUT Category table   : ", out_tbl))
 stm(paste0("OUT JSON metrics     : ", out_json))
@@ -113,6 +123,8 @@ print(c(
   paste0("IN  HTO count type   : ", in_type),
   paste0("IN  HTO count file   : ", in_file),
   paste0("IN  HTO sample sheet : ", in_key),
+  paste0("IN  Well             : ", in_well),
+  paste0("IN  Min. Cutoff      : ", in_min_cutoff),
   paste0("OUT Count matrix     : ", out_mat),
   paste0("OUT Category table   : ", out_tbl),
   paste0("OUT JSON metrics     : ", out_json)
@@ -191,14 +203,23 @@ if(in_type == "awk") {
 }
 in_hto_mat <- add_missing_hto_rows(in_hto_mat,
                                    valid_htos = hto_ref$hto_barcode)
+in_hto_mat <- in_hto_mat[,colSums(in_hto_mat) > 1]
 ```
 
 #### Call positive and negative HTOs
 ```{r Convert Matrix to Binary Calls}
 stm("Binarizing HTO counts to call positive and negative hashes")
-binary_results <- binarize_hash_matrix(in_hto_mat,
-                                       valid_htos = hto_ref$hto_barcode,
-                                       use_median_cut = TRUE)
+if(in_min_cutoff == "auto") {
+  binary_results <- binarize_hash_matrix(in_hto_mat,
+                                         valid_htos = hto_ref$hto_barcode,
+                                         use_median_cut = TRUE,)
+} else {
+  binary_results <- binarize_hash_matrix(in_hto_mat,
+                                         valid_htos = hto_ref$hto_barcode,
+                                         use_median_cut = FALSE,
+                                         min_cut = in_min_cutoff)
+}
+
 ```
 
 #### Convert hashes to category calls
