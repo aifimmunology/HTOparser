@@ -217,7 +217,7 @@ if(in_min_cutoff == "auto") {
   binary_results <- binarize_hash_matrix(in_hto_mat,
                                          valid_htos = hto_ref$hto_barcode,
                                          use_median_cut = FALSE,
-                                         min_cut = in_min_cutoff)
+                                         min_cut = as.numeric(in_min_cutoff))
 }
 
 ```
