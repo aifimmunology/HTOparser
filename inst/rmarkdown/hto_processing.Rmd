@@ -15,6 +15,7 @@ params:
   in_key: NULL
   in_well: NULL
   in_min_cutoff: NULL
+  in_eel: NULL
   out_dir: NULL
 ---
 
@@ -77,21 +78,24 @@ if(in_type == "test_awk") {
   in_file <- system.file("testdata/awk_pipeline_counts_table.csv.gz", package = "HTOparser")
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
-  in_min_cutoff <- NULL
+  in_min_cutoff <- 10
+  in_eel <- TRUE
   out_dir <- tempdir()
 } else if(in_type == "test_cite-old") {
   in_type <- "cite-old"
   in_file <- system.file("testdata/CITE-seq_count_matrix.csv.gz", package = "HTOparser")
   in_key  <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
-  in_min_cutoff <- NULL
+  in_min_cutoff <- 10
+  in_eel <- TRUE
   out_dir <- tempdir()
 } else if(in_type == "test_cite") {
   in_type <- "cite"
   in_file <- system.file("testdata/CITE-seq-Count_umi_mtx/", package = "HTOparser")
   in_key <- system.file("reference/SampleSheet_fallback.csv", package = "HTOparser")
   in_well <- "X000-HP1C1W1"
-  in_min_cutoff <- NULL
+  in_min_cutoff <- 10
+  in_eel <- TRUE
   out_dir <- tempdir()
 } else {
   in_file <- params$in_file
@@ -99,6 +103,9 @@ if(in_type == "test_awk") {
   in_well <- params$in_well
   if(is.null(params$in_min_cutoff)) {
     in_min_cutoff <- "auto"
+  }
+  if(is.null(params$in_eel)) {
+    in_eel <- TRUE
   }
   in_min_cutoff <- params$in_min_cutoff
   out_dir <- params$out_dir
@@ -113,6 +120,7 @@ stm(paste0("IN  HTO count file   : ", in_file))
 stm(paste0("IN  HTO sample sheet : ", in_key))
 stm(paste0("IN  Well             : ", in_well))
 stm(paste0("IN  Min. Cutoff      : ", in_min_cutoff))
+stm(paste0("IN  Expect equal load: ", in_eel))
 stm(paste0("OUT Count matrix     : ", out_mat))
 stm(paste0("OUT Category table   : ", out_tbl))
 stm(paste0("OUT JSON metrics     : ", out_json))
@@ -125,6 +133,7 @@ print(c(
   paste0("IN  HTO sample sheet : ", in_key),
   paste0("IN  Well             : ", in_well),
   paste0("IN  Min. Cutoff      : ", in_min_cutoff),
+  paste0("IN  Expect equal load: ", in_eel),
   paste0("OUT Count matrix     : ", out_mat),
   paste0("OUT Category table   : ", out_tbl),
   paste0("OUT JSON metrics     : ", out_json)
@@ -212,12 +221,14 @@ stm("Binarizing HTO counts to call positive and negative hashes")
 if(in_min_cutoff == "auto") {
   binary_results <- binarize_hash_matrix(in_hto_mat,
                                          valid_htos = hto_ref$hto_barcode,
-                                         use_median_cut = TRUE,)
+                                         use_median_cut = TRUE,
+                                         expect_equal_loading = in_eel)
 } else {
   binary_results <- binarize_hash_matrix(in_hto_mat,
                                          valid_htos = hto_ref$hto_barcode,
                                          use_median_cut = FALSE,
-                                         min_cut = as.numeric(in_min_cutoff))
+                                         min_cut = as.numeric(in_min_cutoff),
+                                         expect_equal_loading = in_eel)
 }
 
 ```
