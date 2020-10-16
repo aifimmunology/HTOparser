@@ -107,7 +107,7 @@ if(in_type == "test_awk") {
   if(is.null(params$in_eel)) {
     in_eel <- TRUE
   } else {
-    in_eel <- as.logical(in_eel)
+    in_eel <- as.logical(params$in_eel)
   }
   in_min_cutoff <- params$in_min_cutoff
   out_dir <- params$out_dir
