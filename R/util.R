@@ -29,3 +29,21 @@ read_csc_mtx <- function(csc_dir) {
 
   mat
 }
+
+#' Simple function to check for matrix or dgCMatrix classes for assertions
+#'
+#' @param x an object to check for matrix or dgCMatrix classes
+#'
+#' @return a logical value
+#'
+check_matrix <- function(x) {
+  res <- FALSE
+  x_classes <- class(x)
+  if("matrix" %in% x_classes) {
+    res <- TRUE
+  }
+  if("dgCMatrix" %in% x_classes) {
+    res <- TRUE
+  }
+  res
+}
