@@ -14,7 +14,7 @@ params:
   in_file: NULL
   in_key: NULL
   in_well: NULL
-  in_min_cutoff: 10
+  in_min_cutoff: "auto"
   in_eel: TRUE
   out_dir: NULL
 ---
@@ -166,7 +166,14 @@ if(in_type %in% c("awk","cite-old","barcounter")) {
   in_hto_table <- in_hto_table[rownames(in_hto_table) != "unmapped",]
   rownames(in_hto_table) <- sub("-.+","",rownames(in_hto_table))
 }
-in_hto_ss <- fread(in_key, col.names = c("pbmc_sample_id","batch_id","hto_name","pool_id"))
+
+in_hto_ss <- fread(in_key)
+if(ncol(in_hto_ss) == 4) {
+  names(in_hto_ss) <- c("pbmc_sample_id","batch_id","hto_name","pool_id")
+} else if(ncol(in_hto_ss) == 5) {
+  names(in_hto_ss) <- c("pbmc_sample_id","batch_id","well_id","hto_name","pool_id")
+}
+
 in_hto_key <- fread(hto_key, header = FALSE, col.names = c("hto_barcode","hto_name"))
 in_hto_key <- in_hto_key[in_hto_ss, on = "hto_name"]
 ```
