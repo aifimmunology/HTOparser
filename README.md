@@ -21,8 +21,8 @@ This package can be installed from Github using the `devtools` package.
 
 You may first need to register your GitHub PAT, as this is a private repository.
 ```
-Sys.setenv(GITHUB_PAT = "your-access-token-here")
-devtools::install_github("aifimmunology/HTOparser")
+git clone git@github.com:aifimmunology/HTOparser
+R -e 'install.packages("HTOparser", type = "source", repos = NULL)'
 ```
 ## Test Data
 
