@@ -3,6 +3,8 @@ title: "Cell Hashing HTO count processing"
 author:
 - Lucas Graybuck
 - Richard Green
+- Upaasana Krishnan
+
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output:
   html_document:
@@ -13,6 +15,7 @@ params:
   in_type: "no_params"
   in_file: NULL
   in_key: NULL
+  hash_key: NULL
   in_well: NULL
   in_min_cutoff: "auto"
   in_eel: TRUE
@@ -149,11 +152,15 @@ print(c(
 ### Load Input Datasets
 
 #### HTO reference
-```{r Load HTO Reference, echo = FALSE, results = 'asis'}
-hto_ref <- totalseq_a_human()
-hto_key <- system.file("reference/TotalSeqA_human_hto_key.csv", package = "HTOparser")
+```{r Load HTO Reference, echo=FALSE, results="asis"}
+#hto_ref <- totalseq_a_human()
+if(is.null(params$hash_key)) {
+    hto_key <- system.file("reference/TotalSeqA_human_hto_key.csv", package = "HTOparser") 
+    } else {
+    hto_key <- params$hash_key
+    }
 
-qc_table(hto_ref)
+#qc_table(hto_ref)
 ```
 
 #### Read input table/matrix and barcode key
@@ -175,6 +182,12 @@ if(ncol(in_hto_ss) == 4) {
 }
 
 in_hto_key <- fread(hto_key, header = FALSE, col.names = c("hto_barcode","hto_name"))
+
+check_hash_key_str(in_hto_key)
+
+all_barcodes <- in_hto_key$hto_barcode
+n_hashes_ref <- nrow(in_hto_key)
+
 in_hto_key <- in_hto_key[in_hto_ss, on = "hto_name"]
 ```
 
@@ -196,12 +209,12 @@ if(in_type == "awk") {
   names(in_hto_table) <- c("count","cell_barcode","hto_barcode")
   in_hto_table <- fuzzy_filtering(in_hto_table,
                                   match_column = "hto_barcode",
-                                  match_values = hto_ref$hto_barcode,
+                                  match_values = all_barcodes,
                                   max_distance = 1)
   
   stm("Converting HTO table to matrix")
   in_hto_mat <- barcode_table_to_matrix(in_hto_table,
-                                        valid_htos = hto_ref$hto_barcode)
+                                        valid_htos = all_barcodes )
 } else if(in_type == "cite-old") {
   stm("Formatting HTO matrix and filtering for valid barcodes")
   in_hto_mat <- as.matrix(in_hto_table[,-1])
@@ -220,7 +233,7 @@ if(in_type == "awk") {
   rownames(in_hto_mat) <- in_hto_key$hto_barcode[match(rownames(in_hto_mat), in_hto_key$hto_name)]
 }
 in_hto_mat <- add_missing_hto_rows(in_hto_mat,
-                                   valid_htos = hto_ref$hto_barcode)
+                                   valid_htos = all_barcodes )
 in_hto_mat <- in_hto_mat[,colSums(in_hto_mat) > 1]
 ```
 
@@ -229,12 +242,12 @@ in_hto_mat <- in_hto_mat[,colSums(in_hto_mat) > 1]
 stm("Binarizing HTO counts to call positive and negative hashes")
 if(in_min_cutoff == "auto") {
   binary_results <- binarize_hash_matrix(in_hto_mat,
-                                         valid_htos = hto_ref$hto_barcode,
+                                         valid_htos = all_barcodes,
                                          use_median_cut = TRUE,
                                          expect_equal_loading = in_eel)
 } else {
   binary_results <- binarize_hash_matrix(in_hto_mat,
-                                         valid_htos = hto_ref$hto_barcode,
+                                         valid_htos = all_barcodes,
                                          use_median_cut = FALSE,
                                          min_cut = as.numeric(in_min_cutoff),
                                          expect_equal_loading = in_eel)
@@ -309,7 +322,7 @@ qc_list <- list(report_type = "hto_processing",
 <a id="hash_count_summary"></a>
 
 #### Hash Count Summary
-```{r Print Hash Count Summary, echo = FALSE, results = 'asis'}
+```{r Print Hash Count Summary, echo=FALSE, results="asis"}
 bsummary <- binary_results$bsummary
 bsummary$pbmc_sample_id <- in_hto_key$pbmc_sample_id[match(bsummary$hto_barcode, in_hto_key$hto_barcode)]
 bsummary <- setcolorder(bsummary,
@@ -349,9 +362,9 @@ qc_table(bsummary)
 ```{r Generate Distribution Plots}
 stm("Generating plots for report")
 plot_list <- lapply(
-  1:nrow(hto_ref),
+  1:length(all_barcodes),
   function(x) {
-    barcode <- hto_ref$hto_barcode[x]
+    barcode <- all_barcodes[x]
     sample_id <- in_hto_key$pbmc_sample_id[in_hto_key$hto_barcode == barcode]
     vals <- in_hto_mat[barcode,]
 
@@ -402,7 +415,7 @@ plot_list <- lapply(
 ```
 
 #### Hash Count Distribution Plots
-```{r Display Plots, fig.height = 12, fig.width = 12}
+```{r Display Plots, fig.height=n_hashes_ref, fig.width=12}
 suppressWarnings(
   plot_grid(plotlist = plot_list,
             nrow = ceiling(length(plot_list) / 2),
@@ -415,7 +428,7 @@ suppressWarnings(
 <a id="cat_summary"></a>
 
 #### Hash Category Summary
-```{r Display Category Summary, echo = FALSE, results = 'asis'}
+```{r Display Category Summary, echo=FALSE, results="asis"}
 rownames(category_results$hash_summary) <- NULL
 
 qc_list$hto_category_stats <- lapply(1:nrow(category_results$hash_summary),
@@ -435,7 +448,7 @@ qc_table(category_results$hash_summary)
 ### Sample/HTO Singlet Counts
 ```{r Count Singlets Per Hash}
 singlet_summary <- make_singlet_summary(category_results$hash_category_table,
-                                        valid_htos = hto_ref$hto_barcode)
+                                        valid_htos = all_barcodes)
 singlet_summary$pbmc_sample_id <- in_hto_key$pbmc_sample_id[match(singlet_summary$hto_barcode, in_hto_key$hto_barcode)]
 singlet_summary <- setcolorder(singlet_summary,
                                c("pbmc_sample_id",

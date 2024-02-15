@@ -4,8 +4,12 @@
 \alias{fuzzy_filtering}
 \title{Fuzzy Filtering for HTO tables}
 \usage{
-fuzzy_filtering(dt, match_column = "hto_barcode", match_values,
-  max_distance = 1)
+fuzzy_filtering(
+  dt,
+  match_column = "hto_barcode",
+  match_values,
+  max_distance = 1
+)
 }
 \arguments{
 \item{dt}{The data.table to filter. Must have columns count, cell_barcode, and hto_barcode.}

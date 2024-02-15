@@ -19,4 +19,4 @@ Depends:
 Suggests: 
     jsonlite (>= 1.6),
     testthat (>= 2.1.0)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.3.1

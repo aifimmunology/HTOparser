@@ -35,7 +35,7 @@ read_csc_mtx <- function(csc_dir) {
 #' @param x an object to check for matrix or dgCMatrix classes
 #'
 #' @return a logical value
-#'
+#' @export
 check_matrix <- function(x) {
   res <- FALSE
   x_classes <- class(x)
@@ -46,4 +46,20 @@ check_matrix <- function(x) {
     res <- TRUE
   }
   res
+}
+
+#' Simple function to check if structure of hashtag key input is correct
+#'
+#' @param x hto_key table with hashtag barcode and id
+#'
+#' @return no return
+#' @export
+check_hash_key_str <- function(in_hto_key) {
+  
+    if(! all(sapply(in_hto_key$hto_barcode,nchar) == 15)) {
+      
+        stop("Barcode Length does not equal 15. Check hashtag key structure")
+    } else {
+    print("Hashtag key structure verified")
+        }
 }

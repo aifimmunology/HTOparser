@@ -4,8 +4,13 @@
 \alias{select_hash_cutoff}
 \title{Select a cutoff for hash counts using automatic, k-means based splitting}
 \usage{
-select_hash_cutoff(x, use_median_cut = FALSE, min_cut = 10,
-  min_fc = 2, seed = 3030)
+select_hash_cutoff(
+  x,
+  use_median_cut = FALSE,
+  min_cut = 10,
+  min_fc = 2,
+  seed = 3030
+)
 }
 \arguments{
 \item{x}{a numeric vector of hash count values}

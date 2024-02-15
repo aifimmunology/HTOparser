@@ -4,8 +4,14 @@
 \alias{binarize_hash_matrix}
 \title{Binarize a matrix of hash counts}
 \usage{
-binarize_hash_matrix(mat, valid_htos = NULL, use_median_cut = FALSE,
-  min_cut = 10, cutoff_vals = NULL, expect_equal_loading = TRUE)
+binarize_hash_matrix(
+  mat,
+  valid_htos = NULL,
+  use_median_cut = FALSE,
+  min_cut = 10,
+  cutoff_vals = NULL,
+  expect_equal_loading = TRUE
+)
 }
 \arguments{
 \item{mat}{A matrix or sparse matrix of hash tag oligo counts. Rows must be hashes, columns must be cells}
